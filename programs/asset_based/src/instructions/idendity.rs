@@ -37,7 +37,7 @@ pub fn _initialize_id(ctx: Context<InitializeId>, id_validity_duration: i64) -> 
     let issuer = &ctx.accounts.issuer;
     let wrapper_account = &ctx.accounts.wrapper_account;
 
-    if !wrapper_account.list_issuer.contains(issuer.key) {
+    if !wrapper_account.id_issuers.contains(issuer.key) {
         return Err(IdendityError::IssuerNotApproved.into());
     }
 
@@ -60,7 +60,7 @@ pub fn _add_issuer_to_id(ctx: Context<AddIssuer>, id_validity_duration: i64) -> 
     let issuer = &ctx.accounts.issuer;
     let wrapper_account = &ctx.accounts.wrapper_account;
 
-    if !wrapper_account.list_issuer.contains(issuer.key) {
+    if !wrapper_account.id_issuers.contains(issuer.key) {
         return Err(IdendityError::IssuerNotApproved.into());
     }
 

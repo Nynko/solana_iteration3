@@ -49,7 +49,7 @@ pub fn _transfer(ctx: Context<Transfer>, amount: u64) -> Result<()> {
     }
     let sender_issuers = &ctx.accounts.idendity_sender.issuers;
     let receiver_issuers = &ctx.accounts.idendity_receiver.issuers;
-    let allowed_issuers =  &ctx.accounts.wrapper_account.list_issuer;
+    let allowed_issuers =  &ctx.accounts.wrapper_account.id_issuers;
 
 
     check_idendities(sender_issuers, allowed_issuers,current_time)?;

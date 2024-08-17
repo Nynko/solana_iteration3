@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { HandmadeNaive } from "../target/types/handmade_naive";
+import { AssetBased } from "../target/types/asset_based";
 
 export async function issue_first_idendity(
   validity_duration: number,
@@ -8,7 +8,7 @@ export async function issue_first_idendity(
   issuer: anchor.web3.Signer,
   approver: anchor.web3.PublicKey,
   wrapper: anchor.web3.PublicKey,
-  program: Program<HandmadeNaive>
+  program: Program<AssetBased>
 ) {
   const [idendity, bump] = await anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("identity"), owner.publicKey.toBuffer()],

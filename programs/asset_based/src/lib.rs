@@ -12,8 +12,7 @@ pub use state::*;
 declare_id!("Dq1SdmsJ5GpeGazTRbhFVoQkowZDY77CDdVhcoAw5Zu");
 
 #[program]
-pub mod handmade_naive {
-    use anchor_lang::solana_program::entrypoint::ProgramResult;
+pub mod asset_based {
 
     use super::*;
 
@@ -22,8 +21,9 @@ pub mod handmade_naive {
     pub fn initialize_wrapper(
         ctx: Context<InitializeWrapper>,
         list_issuer: Vec<Pubkey>,
+        exit_regulators: Vec<Pubkey>
     ) -> Result<()> {
-        wrapper::_initialize_wrapper(ctx, list_issuer)
+        wrapper::_initialize_wrapper(ctx, list_issuer, exit_regulators)
     }
 
     pub fn add_issuers_wrapper(ctx: Context<AddWrapperIssuer>, issuer: Pubkey) -> Result<()> {
@@ -34,16 +34,12 @@ pub mod handmade_naive {
         wrapper::_remove_issuer_wrapper(ctx)
     }
 
-    pub fn initialize_mint(ctx: Context<WrapTokenHolder>) -> Result<()> {
-        wrapper::_initialize_mint(ctx)
-    }
-
-    pub fn initialize_wrap_account(ctx: Context<InitializeWrappedAccount>) -> Result<()> {
-        wrapper::_initialize_wrap_account(ctx)
-    }
-
     pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64, decimals: u8) -> Result<()> {
         wrapper::_wrap_tokens(ctx, amount, decimals)
+    }
+
+    pub fn unwrap_tokens(ctx: Context<UnWrapTokens>, amount: u64, decimals: u8) -> Result<()>{
+        wrapper::_unwrap_tokens(ctx,amount,decimals)
     }
 
     // TODO: Unwrap tokens

@@ -10,6 +10,5 @@ pub struct WrappedTokenAccount {
 }
 
 impl WrappedTokenAccount {
-
     pub const LEN : usize = 8 + 32 + 32 + 32 + 8 + 8 ;
 }

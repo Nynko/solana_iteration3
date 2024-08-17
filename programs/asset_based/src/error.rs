@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub enum WrapperError {
     #[msg("Decimal provided does not match the mint's decimal value")]
     InvalidDecimals,
+    #[msg("Invalid exit regulator for the specified wrapper")]
+    InvalidExitRegulator
 }
 
 #[error_code]

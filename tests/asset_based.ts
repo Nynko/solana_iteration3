@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { HandmadeNaive } from "../target/types/handmade_naive";
+import { AssetBased } from "../target/types/asset_based";
 import {
   create_spl_mint,
   create_spl_token_account,
@@ -19,11 +19,11 @@ import { self_transfer_wtokens, send_transaction_buffer, transfer_sign_by_2_auth
 import { issue_first_idendity } from "./idendity_tests";
 import fs from "fs";
 
-describe("handmade_naive", async () => {
+describe("asset_based", async () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.HandmadeNaive as Program<HandmadeNaive>;
+  const program = anchor.workspace.AssetBased as Program<AssetBased>;
   let mint_info, user1_info, user2_info, wrapper, issuer;
   let approver = anchor.Wallet.local().payer;
   let issuer_approval, user1_id;
@@ -33,7 +33,7 @@ describe("handmade_naive", async () => {
 
   it("Init", async () => {
     if (DEVNET) {
-      const file_path = "tests/data/handmade_naive.json";
+      const file_path = "tests/data/asset_based.json";
       let file_exist = fs.existsSync(file_path);
 
       if (file_exist) {
@@ -82,7 +82,7 @@ describe("handmade_naive", async () => {
         );
       }
     } else {
-      const file_path = "tests/data/handmade_naive_local.json";
+      const file_path = "tests/data/asset_based.json";
       let file_exist = fs.existsSync(file_path);
 
       if (file_exist) {
@@ -541,7 +541,7 @@ interface InitReturn {
 }
 
 async function init(
-  program: Program<HandmadeNaive>,
+  program: Program<AssetBased>,
   approver: anchor.web3.Keypair
 ): Promise<InitReturn> {
   const token_program = TOKEN_PROGRAM_ID;

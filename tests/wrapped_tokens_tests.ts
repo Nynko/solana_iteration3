@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { HandmadeNaive } from "../target/types/handmade_naive";
+import { AssetBased } from "../target/types/asset_based";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
@@ -22,7 +22,7 @@ export async function wrap_tokens(
   user_token_account: anchor.web3.PublicKey,
   mint: anchor.web3.PublicKey,
   wrapper_token_holder: anchor.web3.PublicKey,
-  program: Program<HandmadeNaive>,
+  program: Program<AssetBased>,
   tokenProgram: anchor.web3.PublicKey = TOKEN_PROGRAM_ID
 ) {
   const tx = await program.methods

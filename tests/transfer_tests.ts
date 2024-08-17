@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { HandmadeNaive } from "../target/types/handmade_naive";
+import { AssetBased } from "../target/types/asset_based";
 
 export async function transfer_wtokens(
   amount: number,
@@ -11,7 +11,7 @@ export async function transfer_wtokens(
   destination_wrapped_account: anchor.web3.PublicKey,
   two_auth: anchor.web3.PublicKey,
   two_auth_signer: anchor.web3.Signer | null,
-  program: Program<HandmadeNaive>
+  program: Program<AssetBased>
 ) {
   const instruction = await program.methods
     .transfer(new anchor.BN(amount))
@@ -42,7 +42,7 @@ export async function self_transfer_wtokens(
   wrapper_account: anchor.web3.PublicKey,
   source_owner: anchor.web3.Signer,
   source_wrapped_account: anchor.web3.PublicKey,
-  program: Program<HandmadeNaive>
+  program: Program<AssetBased>
 ) {
   const instruction = await program.methods
     .transfer(new anchor.BN(amount))
@@ -78,7 +78,7 @@ export async function transfer_with_partial_sig(
   destination_wrapped_account: anchor.web3.PublicKey,
   two_auth: anchor.web3.PublicKey,
   two_auth_pubkey: anchor.web3.PublicKey | null,
-  program: Program<HandmadeNaive>
+  program: Program<AssetBased>
 ): Promise<[Buffer, {
   blockhash: anchor.web3.Blockhash;
   lastValidBlockHeight: number;

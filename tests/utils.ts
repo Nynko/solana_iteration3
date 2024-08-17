@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import fs from "fs";
-import { HandmadeNaive } from "../target/types/handmade_naive";
+import { AssetBased } from "../target/types/asset_based";
 import { Program } from "@coral-xyz/anchor";
 
 export function load_keypair(filename: string): anchor.web3.Keypair {
@@ -37,7 +37,7 @@ export async function sendTransaction(
 }
 
 export async function create_user_with_best_bump(
-  program: Program<HandmadeNaive>,
+  program: Program<AssetBased>,
   mint: anchor.web3.PublicKey
 ) {
   let user;

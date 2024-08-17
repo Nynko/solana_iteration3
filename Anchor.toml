@@ -5,10 +5,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-handmade_naive = "Dq1SdmsJ5GpeGazTRbhFVoQkowZDY77CDdVhcoAw5Zu"
+asset_based = "Dq1SdmsJ5GpeGazTRbhFVoQkowZDY77CDdVhcoAw5Zu"
 
 [programs.devnet]
-handmade_naive = "Dq1SdmsJ5GpeGazTRbhFVoQkowZDY77CDdVhcoAw5Zu"
+asset_based = "Dq1SdmsJ5GpeGazTRbhFVoQkowZDY77CDdVhcoAw5Zu"
 
 [registry]
 url = "https://api.apr.dev"

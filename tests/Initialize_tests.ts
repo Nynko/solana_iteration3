@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { HandmadeNaive } from "../target/types/handmade_naive";
+import { AssetBased } from "../target/types/asset_based";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
@@ -77,7 +77,7 @@ export async function initialize_wrapper(
   payer: anchor.web3.Signer,
   issuer: anchor.web3.Signer,
   approver: anchor.web3.Signer,
-  program: Program<HandmadeNaive>
+  program: Program<AssetBased>
 ): Promise<anchor.web3.PublicKey> {
   const [wrapper_account, bump] =
     await anchor.web3.PublicKey.findProgramAddressSync(
@@ -107,7 +107,7 @@ export async function initialize_wrapper_token_holder(
   payer: anchor.web3.Signer,
   mint: anchor.web3.PublicKey,
   wrapper: anchor.web3.PublicKey,
-  program: Program<HandmadeNaive>,
+  program: Program<AssetBased>,
   token_program: anchor.web3.PublicKey = TOKEN_PROGRAM_ID
 ): Promise<anchor.web3.PublicKey> {
   const token_address = getAssociatedTokenAddressSync(
@@ -143,7 +143,7 @@ export async function initialize_wrapped_account(
   mint: anchor.web3.PublicKey,
   approver: anchor.web3.PublicKey,
   wrapper_account: anchor.web3.PublicKey,
-  program: Program<HandmadeNaive>,
+  program: Program<AssetBased>,
   token_program: anchor.web3.PublicKey = TOKEN_PROGRAM_ID
 ): Promise<anchor.web3.PublicKey> {
   const [wrapped_account, bump] =
@@ -209,7 +209,7 @@ export async function initialize_two_auth(
   approver: anchor.web3.PublicKey,
   wrapper_account: anchor.web3.PublicKey,
   two_auth_entity: anchor.web3.PublicKey,
-  program: Program<HandmadeNaive>
+  program: Program<AssetBased>
 ): Promise<anchor.web3.PublicKey> {
   const [two_auth, bump] = await anchor.web3.PublicKey.findProgramAddressSync(
     [
