@@ -18,6 +18,6 @@ pub struct RecoveryAuthority { // space = 4 + 32 + 1 + 4
 
 impl RecoveryAuthorities {
     pub fn get_init_len(recovery_authorities: &Vec<RecoveryAuthority>) -> usize {
-        return 8 + recovery_authorities.len() * (4 + 32 + 1 + 4);
+        return 8 + 4 + recovery_authorities.len() * (32 + 1 + 4);
     }
 }

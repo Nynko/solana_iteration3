@@ -51,8 +51,8 @@ pub struct WrapTokens<'info> {
     pub from_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub owner_token_account: Signer<'info>,
-    #[account(constraint = owner.key() == user_wrapped_token_account.owner)]
-    pub owner: Signer<'info>,
+    /// CHECK: owner.key() == user_wrapped_token_account.owner but need to check after init if init happens --> Maybe not necessary ? 
+    pub owner: AccountInfo<'info>,
     #[account(mint::token_program = token_program)]
     pub mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -67,13 +67,12 @@ pub struct UnWrapTokens<'info> {
     /// CHECK: The approver of the wrapper
     pub approver: UncheckedAccount<'info>,
     /// CHECK: That the exit regulator is in the list of the wrapper_account
-    pub exit_regulator: AccountInfo<'info>,
-    #[account(token::authority = wrapper_account, token::mint = mint, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
-    pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub exit_regulator: Signer<'info>,
+    #[account(mut, token::authority = wrapper_account, token::mint = mint, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
+    pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>, // also constraints on owner field
     #[account(mut, token::authority = owner_token_account, token::mint = mint)]
     pub to_token_account: InterfaceAccount<'info, TokenAccount>,
     pub owner_token_account: AccountInfo<'info>,
-    #[account(constraint = owner.key() == user_wrapped_token_account.owner)]
     pub owner: Signer<'info>,
     #[account(mint::token_program = token_program)]
     pub mint: InterfaceAccount<'info, Mint>,
@@ -89,6 +88,7 @@ pub fn _initialize_wrapper(
     let wrapper_account = &mut ctx.accounts.wrapper_account;
     wrapper_account.id_issuers = list_issuer;
     wrapper_account.exit_regulators = exit_regulators;
+    wrapper_account.bump = ctx.bumps.wrapper_account;
     Ok(())
 }
 
@@ -122,8 +122,8 @@ pub fn _wrap_tokens(ctx: Context<WrapTokens>, amount: u64, decimals: u8) -> Resu
         ctx.accounts.token_program.key,
         &ctx.accounts.from_token_account.key(),
         &ctx.accounts.user_wrapped_token_account.key(),
-        ctx.accounts.owner.key,
-        &[ctx.accounts.owner.key],
+        ctx.accounts.owner_token_account.key,
+        &[ctx.accounts.owner_token_account.key],
         amount,
     )?;
     program::invoke(
@@ -132,7 +132,7 @@ pub fn _wrap_tokens(ctx: Context<WrapTokens>, amount: u64, decimals: u8) -> Resu
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.from_token_account.to_account_info(),
             ctx.accounts.user_wrapped_token_account.to_account_info(),
-            ctx.accounts.owner.to_account_info(),
+            ctx.accounts.owner_token_account.to_account_info(),
         ],
     )?;
 
@@ -157,23 +157,29 @@ pub fn _unwrap_tokens(ctx: Context<UnWrapTokens>, amount: u64, decimals: u8) -> 
         return Err(WrapperError::InvalidDecimals.into());
     }
 
-    // CPI to transfer tokens from user to wrapper
+    let approver = ctx.accounts.approver.key();
+    let bump = ctx.bumps.wrapper_account;
+    let seed: &[&[&[u8]]]  = &[&[b"wrapper", approver.as_ref(), &[bump]]];
+
+
+    // CPI to transfer tokens from user to to_token_account
     let ix = spl_token::instruction::transfer(
         ctx.accounts.token_program.key,
         &ctx.accounts.user_wrapped_token_account.key(),
         &ctx.accounts.to_token_account.key(),
-        ctx.accounts.owner.key,
-        &[ctx.accounts.owner.key],
+        &ctx.accounts.wrapper_account.key(),
+        &[&ctx.accounts.wrapper_account.key()],
         amount,
     )?;
-    program::invoke(
+    program::invoke_signed(
         &ix,
         &[
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.user_wrapped_token_account.to_account_info(),
             ctx.accounts.to_token_account.to_account_info(),
-            ctx.accounts.owner.to_account_info(),
+            ctx.accounts.wrapper_account.to_account_info(),
         ],
+        seed
     )?;
     
     Ok(())

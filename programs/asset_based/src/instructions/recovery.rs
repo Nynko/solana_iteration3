@@ -1,6 +1,7 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::program};
+use anchor_spl::{token::{spl_token, Token}, token_interface::{Mint, TokenAccount}};
 
-use crate::{RecoveryAuthorities, RecoveryAuthority};
+use crate::{error::RecoveryError, IdAccount, RecoveryAuthorities, RecoveryAuthority, TwoAuth, WrapperAccount};
 
 
 #[derive(Accounts)]
@@ -14,9 +15,8 @@ pub struct InitializeRecovery<'info> {
     pub wrapper_account: Account<'info, WrapperAccount>,
     /// CHECK: The approver of the wrapper
     pub approver: UncheckedAccount<'info>,
-    #[account(mut, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump, has_one= owner, has_one=wrapper_account, has_one = mint)]
-    pub user_wrapped_token_account: Account<'info, WrappedTokenAccount>,
-    #[account(constraint = owner.key() == user_wrapped_token_account.owner)]
+    #[account(mut, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
+    pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
     pub owner: Signer<'info>,
     pub two_auth_entity: Option<Signer<'info>>,
     #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), owner.key().as_ref()], bump)]
@@ -25,124 +25,154 @@ pub struct InitializeRecovery<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// #[derive(Accounts)]
+// #[instruction(recovery_delegates : Vec<RecoveryAuthority>)]
+// pub struct UpdateRecovery<'info> {
+//     #[account(mut, seeds = [b"recovery", owner.key().as_ref()], bump, realloc = RecoveryAuthorities::get_init_len(&recovery_delegates), realloc::payer=payer, realloc::zero=true)]
+//     pub recovery_authority: Account<'info, RecoveryAuthorities>,
+//     #[account(mut)]
+//     pub payer: Signer<'info>,
+//     #[account(seeds=[b"wrapper", approver.key().as_ref()], bump)]
+//     pub wrapper_account: Account<'info, WrapperAccount>,
+//     /// CHECK: The approver of the wrapper
+//     pub approver: UncheckedAccount<'info>,
+//     #[account(mut, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
+//     pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
+//     pub owner: Signer<'info>,
+//     pub two_auth_entity: Option<Signer<'info>>,
+//     #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), owner.key().as_ref()], bump)]
+//     pub two_auth: Account<'info,TwoAuth>,
+//     pub mint: InterfaceAccount<'info, Mint>,
+//     pub system_program: Program<'info, System>,
+// }
+
 
 #[derive(Accounts)]
 pub struct RecoverAccount<'info> {
-    #[account(init, seeds = [b"recovery", owner.key().as_ref()], bump, payer = payer, space = RecoveryAuthorities::get_init_len(&recovery_delegates))]
+    #[account(seeds = [b"recovery", owner.key().as_ref()], bump)]
     pub recovery_authority: Account<'info, RecoveryAuthorities>,
-    #[account(mut)]
-    pub payer: Signer<'info>,
     #[account(seeds=[b"wrapper", approver.key().as_ref()], bump)]
     pub wrapper_account: Account<'info, WrapperAccount>,
     /// CHECK: The approver of the wrapper
     pub approver: UncheckedAccount<'info>,
-    #[account(mut, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump, has_one= owner, has_one=wrapper_account, has_one = mint)]
-    pub user_wrapped_token_account: Account<'info, WrappedTokenAccount>,
-    #[account(constraint = owner.key() == user_wrapped_token_account.owner)]
-    pub owner: Signer<'info>,
+    #[account(mut, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
+    pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
+    /// CHECK: Account to recover from
+    pub owner: AccountInfo<'info>,
+    #[account(init_if_needed, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), main_recovery_authority.key().as_ref()], bump, payer= main_recovery_authority)]
+    pub recover_authority_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub main_recovery_authority: Signer<'info>,
     pub two_auth_entity: Option<Signer<'info>>,
     #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), owner.key().as_ref()], bump)]
     pub two_auth: Account<'info,TwoAuth>,
     #[account(seeds = [b"identity", owner.key().as_ref()], bump)]
     pub idendity: Account<'info, IdAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
-
-// #[derive(Accounts)]
-// pub struct RecoverAccount<'info> {
-//     #[account(mut)]
-//     pub new_owner: Signer<'info>, // Does it needs to be a signer?
-//     #[account(mut, token::authority = new_owner.key())]
-//     pub new_token_account: InterfaceAccount<'info, TokenAccount>,
-//     #[account(seeds = [b"recovery_authority", owner.key().as_ref()], bump)]
-//     pub recovery_authority: Account<'info, RecoveryAuthority>,
-//     #[account(seeds = [b"last_tx", owner.key().as_ref()], bump)]
-//     pub last_tx: Account<'info, LastTx>,
-//     #[account(mut, seeds = [b"identity", token_account.key().as_ref()], bump, realloc = 80 + 49 * idendity.issuers.len() + 32, realloc::payer = new_owner, realloc::zero= false)]
-//     pub idendity: Account<'info, IdAccount>,
-//     /// CHECK: Account to recover
-//     pub owner: AccountInfo<'info>,
-//     #[account(mut, seeds = [b"mint"], bump)]
-//     pub mint: InterfaceAccount<'info, Mint>,
-//     #[account(mut, token::authority = owner.key())]
-//     pub token_account: InterfaceAccount<'info, TokenAccount>,
-//     pub token_program: Interface<'info, TokenInterface>,
-//     pub system_program: Program<'info, System>,
-// }
-
 
 
 pub fn _initialize_recovery(
     ctx: Context<InitializeRecovery>,
     recovery_delegates: Vec<RecoveryAuthority>,
 ) -> Result<()> {
-    let last_tx = &mut ctx.accounts.last_tx;
-    last_tx.last_tx_timestamp = Clock::get()?.unix_timestamp;
-
     let recovery_authority = &mut ctx.accounts.recovery_authority;
     recovery_authority.authorities = recovery_delegates;
-    recovery_authority.minimum_signatures = minimum_signatures;
 
     Ok(())
 }
 
 
 
-/// NOTES : Recovery should recover the ID but also the funds on a specific account, 
-/// But we can recover several wrapped accounts with the same ID
-/// So we need to do the wrapped accounts one by one (but the ID only the first time)
+pub fn _recover_account(ctx: Context<RecoverAccount>) -> Result<()> {
+    let recovery_authority = &ctx.accounts.recovery_authority;
+    let main_recover_authority = &ctx.accounts.main_recovery_authority;
+    let main_recovery = recovery_authority.authorities.iter().find(|recovery| recovery.authority == main_recover_authority.key());
 
-// pub fn _recovering_account(ctx: Context<RecoverAccount>) -> Result<()> {
-//     let recovery_authority = &ctx.accounts.recovery_authority;
+    if main_recovery.is_none() {
+        return Err(RecoveryError::WrongMainRecoveryAuthority.into())
+    }
 
-//     let signers: Vec<_> = ctx
-//         .remaining_accounts
-//         .iter()
-//         .filter(|account| account.is_signer)
-//         .collect();
-//     let mut number_of_signatures = 0;
-//     for authority in recovery_authority.authorities.iter() {
-//         if signers.iter().any(|signer| signer.key == authority) {
-//             number_of_signatures += 1;
-//         }
-//         if number_of_signatures >= recovery_authority.minimum_signatures {
-//             break;
-//         }
-//     }
+    let main_recovery = main_recovery.unwrap();
 
-//     if number_of_signatures < recovery_authority.minimum_signatures {
-//         return Err(RecoveryError::NotEnoughSignatures.into());
-//     }
+    let last_tx = &ctx.accounts.two_auth.last_tx;
+    let timestamp = Clock::get()?.unix_timestamp;
+    if *last_tx + (main_recovery.min_duration as i64 ) < timestamp {
+        return Err(RecoveryError::RecoveryTimeNotPassed.into());
+    }
 
-//     let last_tx = &mut ctx.accounts.last_tx;
-//     let idendity = &mut ctx.accounts.idendity;
+    if main_recovery.min_signatures > 1 {
+        let mut number_of_signatures = 1;
 
-//     if last_tx.last_tx_timestamp + 0 > Clock::get()?.unix_timestamp {
-//         return Err(RecoveryError::RecoveryTimeNotPassed.into());
-//     }
-//     if idendity.recovered_token_address.len() > 0 {
-//         return Err(IdendityError::IdendityAlreadyRecovered.into());
-//     }
-//     idendity
-//         .recovered_token_address
-//         .push(ctx.accounts.new_token_account.key().clone());
+        let signers: Vec<_> = ctx
+        .remaining_accounts
+        .iter()
+        .filter(|account| account.is_signer && account.key != main_recover_authority.key)
+        .collect();
 
-//     let seeds: &[&[&[u8]]] = &[&[b"mint", &[ctx.bumps.mint]]];
+        for authority in recovery_authority.authorities.iter().filter(
+            | authority| 
+            authority.min_signatures <= main_recovery.min_signatures // Only the authorities that don't need more signatures
+            && *last_tx + (authority.min_duration as i64)  < timestamp // Only those that can be use for this duration
+        ) {
+            if signers.iter().any(|signer| signer.key == &authority.authority) {
+                number_of_signatures += 1
+            }
+            if number_of_signatures >= main_recovery.min_signatures {
+                break;
+            }
+        }
+    
+        if number_of_signatures < main_recovery.min_signatures {
+            return Err(RecoveryError::NotEnoughSignatures.into());
+        }
+    }
 
-//     let amount = ctx.accounts.token_account.amount;
+    let approver = ctx.accounts.approver.key();
+    let bump = ctx.bumps.wrapper_account;
+    let seed: &[&[&[u8]]]  = &[&[b"wrapper", approver.as_ref(), &[bump]]];
 
-//     burn_tokens(&ctx, seeds, amount)?;
-//     mint_tokens(&ctx, seeds, amount)?;
+    // CPI to transfer tokens from user to recover_authority_wrapped_token_account
+    let ix = spl_token::instruction::transfer(
+        ctx.accounts.token_program.key,
+        &ctx.accounts.user_wrapped_token_account.key(),
+        &ctx.accounts.recover_authority_wrapped_token_account.key(),
+        &ctx.accounts.wrapper_account.key(),
+        &[&ctx.accounts.wrapper_account.key()],
+        ctx.accounts.user_wrapped_token_account.amount,
+    )?;
+    program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.user_wrapped_token_account.to_account_info(),
+            ctx.accounts.recover_authority_wrapped_token_account.to_account_info(),
+            ctx.accounts.wrapper_account.to_account_info(),
+        ],
+        seed
+    )?;
 
-//     let token_account = &ctx.accounts.token_account;
+    // Close account
+    let ix = spl_token::instruction::close_account(
+        ctx.accounts.token_program.key,
+        &ctx.accounts.user_wrapped_token_account.key(),
+        &ctx.accounts.main_recovery_authority.key(),
+        &ctx.accounts.wrapper_account.key(),
+        &[&ctx.accounts.wrapper_account.key()],
+    )?;
 
-//     if token_account.close_authority == Some(ctx.accounts.mint.key()).into() {
-//         close_token_account(&ctx, seeds)?;
-//     }
-//     // This is optional: only possible with account that were created by this program
-//     // or for which the program has the authority to close the account
-//     // It allows to recover the rent of the account
+    program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.user_wrapped_token_account.to_account_info(),
+            ctx.accounts.main_recovery_authority.to_account_info(),
+            ctx.accounts.wrapper_account.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+        ],
+        seed,
+    )?;
 
-//     Ok(())
-// }
+    Ok(())
+}

@@ -1,6 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { AssetBased } from "../target/types/asset_based";
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export async function transfer_wtokens(
   amount: number,
@@ -11,6 +12,8 @@ export async function transfer_wtokens(
   destination_wrapped_account: anchor.web3.PublicKey,
   two_auth: anchor.web3.PublicKey,
   two_auth_signer: anchor.web3.Signer | null,
+  mint: anchor.web3.PublicKey,
+  approver: anchor.web3.PublicKey,
   program: Program<AssetBased>
 ) {
   const instruction = await program.methods
@@ -23,9 +26,22 @@ export async function transfer_wtokens(
       twoAuthSigner: two_auth_signer ? two_auth_signer.publicKey : null,
       twoAuth: two_auth,
       wrapperAccount: wrapper_account,
+      mint:mint,
+      approver:approver,
+      tokenProgram:TOKEN_PROGRAM_ID
     })
     .instruction();
 
+  // Create the priority fee instructions
+  // const computePriceIx = anchor.web3.ComputeBudgetProgram.setComputeUnitPrice({
+  //   microLamports: 10000,
+  // });
+
+  // const computeLimitIx = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({
+  //   units: 50_000,
+  // });
+
+  // const transaction = new anchor.web3.Transaction().add(computePriceIx,computeLimitIx,instruction);
   const transaction = new anchor.web3.Transaction().add(instruction);
 
   const txSig = await anchor.web3.sendAndConfirmTransaction(

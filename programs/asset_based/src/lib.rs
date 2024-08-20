@@ -9,7 +9,7 @@ use anchor_lang::prelude::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("Dq1SdmsJ5GpeGazTRbhFVoQkowZDY77CDdVhcoAw5Zu");
+declare_id!("5eMepu4HKkhKsBX7tkSKSRsHAekV83oy5tca2TzVktXz");
 
 #[program]
 pub mod asset_based {
@@ -42,8 +42,6 @@ pub mod asset_based {
         wrapper::_unwrap_tokens(ctx,amount,decimals)
     }
 
-    // TODO: Unwrap tokens
-
     // Idendity instructions
 
     pub fn initialize_id(ctx: Context<InitializeId>, id_validity_duration: i64) -> Result<()> {
@@ -52,6 +50,14 @@ pub mod asset_based {
 
     pub fn add_issuer_to_id(ctx: Context<AddIssuer>, id_validity_duration: i64) -> Result<()> {
         idendity::_add_issuer_to_id(ctx, id_validity_duration)
+    }
+
+    pub fn add_pseudo(ctx: Context<AddPseudo>, _pseudo: String) -> Result<()> {
+        idendity::_add_pseudo(ctx, _pseudo)
+    }
+
+    pub fn update_pseudo(ctx: Context<UpdatePseudo>, _pseudo: String) -> Result<()> {
+        idendity::_update_pseudo(ctx, _pseudo)
     }
 
     // TwoAuth instructions
@@ -71,6 +77,17 @@ pub mod asset_based {
     }
 
     // Recovery instructions
+
+    pub fn initialize_recovery(
+        ctx: Context<InitializeRecovery>,
+        recovery_delegates: Vec<RecoveryAuthority>,
+    ) -> Result<()> {
+        recovery::_initialize_recovery(ctx, recovery_delegates)
+    }
+
+    pub fn recover_account(ctx: Context<RecoverAccount>) -> Result<()> {
+        recovery::_recover_account(ctx)
+    }
 
     // Transfer instructions
 

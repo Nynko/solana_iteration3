@@ -6,7 +6,8 @@ set -e
 
 
 # Remove current idl
-rm /Users/nicolasbeaudouin/Documents/Project1/asset_based/target/deploy/asset_based-keypair.json
+rm -f /Users/nicolasbeaudouin/Documents/Project1/asset_based/target/deploy/asset_based-keypair.json
+rm -f /Users/nicolasbeaudouin/Documents/Project1/asset_based/tests/data/asset_based.json
 
 # Build with anchor
 anchor build

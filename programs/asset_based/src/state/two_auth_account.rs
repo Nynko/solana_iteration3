@@ -16,6 +16,8 @@ pub struct TwoAuthArgs {
 #[account]
 pub struct TwoAuth {
     pub two_auth: Option<TwoAuthParameters>,
+    pub last_tx: i64, // Last transaction timestamp
+    pub bump: u8
 }
 
 impl TwoAuth {
@@ -26,9 +28,9 @@ impl TwoAuth {
                 allowed_issuers,
             }) => {
                 let functions_space = functions.iter().map(|f| f.get_init_len()).sum::<usize>();
-                return 8 + 1 + 4 + functions_space + 32 + 4 + 32 * allowed_issuers.len();
+                return 8 + 1 + 4 + functions_space + 32 + 4 + 32 * allowed_issuers.len() + 8 + 1;
             }
-            None => 8 + 1,
+            None => 8 + 1 + 8 + 1,
         }
     }
 }

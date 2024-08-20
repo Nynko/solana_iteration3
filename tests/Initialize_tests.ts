@@ -75,7 +75,8 @@ export async function create_spl_token_account(
 
 export async function initialize_wrapper(
   payer: anchor.web3.Signer,
-  issuer: anchor.web3.Signer,
+  issuers: anchor.web3.PublicKey[],
+  exit_regulators: anchor.web3.PublicKey[],
   approver: anchor.web3.Signer,
   program: Program<AssetBased>
 ): Promise<anchor.web3.PublicKey> {
@@ -88,7 +89,7 @@ export async function initialize_wrapper(
   console.log("[Pk] Wrapper account", wrapper_account.toBase58());
 
   const tx = await program.methods
-    .initializeWrapper([issuer.publicKey])
+    .initializeWrapper(issuers, exit_regulators)
     .accountsPartial({
       payer: payer.publicKey,
       approver: approver.publicKey,
@@ -102,80 +103,46 @@ export async function initialize_wrapper(
   return wrapper_account;
 }
 
-export async function initialize_wrapper_token_holder(
-  approver: anchor.web3.PublicKey,
-  payer: anchor.web3.Signer,
-  mint: anchor.web3.PublicKey,
-  wrapper: anchor.web3.PublicKey,
-  program: Program<AssetBased>,
-  token_program: anchor.web3.PublicKey = TOKEN_PROGRAM_ID
-): Promise<anchor.web3.PublicKey> {
-  const token_address = getAssociatedTokenAddressSync(
-    mint,
-    wrapper,
-    true,
-    token_program,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
 
-  console.log("[Pk] Wrapper Token Holder", token_address.toBase58());
+// export async function get_wrapped_account(
+//   owner: anchor.web3.Signer,
+//   mint: anchor.web3.PublicKey,
+//   wrapper_account: anchor.web3.PublicKey,
+//   program: Program<AssetBased>,
+// ): Promise<[anchor.web3.PublicKey, number]> {
+//   const [wrapped_account, bump] =
+//     await anchor.web3.PublicKey.findProgramAddressSync(
+//       [
+//         Buffer.from("wrapped_token"),
+//         wrapper_account.toBuffer(),
+//         mint.toBuffer(),
+//         owner.publicKey.toBuffer(),
+//       ],
+//       program.programId
+//     );
 
-  const tx = await program.methods
-    .initializeMint()
-    .accountsPartial({
-      approver: approver,
-      payer: payer.publicKey,
-      wrapperAccount: wrapper,
-      wrapperAssociatedTokenAccount: token_address,
-      mint: mint,
-      tokenProgram: token_program,
-    })
-    .signers([payer])
-    .rpc();
+//   return [wrapped_account,bump];
+// }
 
-  console.log("Init wrapped mint tx", tx);
 
-  return token_address;
-}
-
-export async function initialize_wrapped_account(
-  owner: anchor.web3.Signer,
-  mint: anchor.web3.PublicKey,
-  approver: anchor.web3.PublicKey,
-  wrapper_account: anchor.web3.PublicKey,
-  program: Program<AssetBased>,
-  token_program: anchor.web3.PublicKey = TOKEN_PROGRAM_ID
-): Promise<anchor.web3.PublicKey> {
-  const [wrapped_account, bump] =
-    await anchor.web3.PublicKey.findProgramAddressSync(
+export function get_wrapped_account(wrapper_pda: anchor.web3.PublicKey, mint: anchor.web3.PublicKey, program: Program<AssetBased>): [anchor.web3.Keypair, anchor.web3.PublicKey] {
+  let bump: number = 1;
+  let wrapped_account: anchor.web3.PublicKey;
+  let user1: anchor.web3.Keypair;
+  while (bump != 255) {
+    user1 = anchor.web3.Keypair.generate();
+    [wrapped_account, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("wrapped_token"),
-        wrapper_account.toBuffer(),
+        wrapper_pda.toBuffer(),
         mint.toBuffer(),
-        owner.publicKey.toBuffer(),
+        user1.publicKey.toBuffer(),
       ],
       program.programId
     );
+  }
 
-  console.log("[Pk] User Wrapped account", wrapped_account.toBase58());
-
-  const tx = await program.methods
-    .initializeWrapAccount()
-    .accountsPartial({
-      payer: anchor.Wallet.local().publicKey,
-      wrapperAccount: wrapper_account,
-      approver: approver,
-      owner: owner.publicKey,
-      mint: mint,
-      wrappedTokenAccount: wrapped_account,
-      tokenProgram: token_program,
-    })
-    .signers([owner, anchor.Wallet.local().payer])
-    .rpc();
-
-  console.log("Init wrapped account tx", tx);
-
-  return wrapped_account;
+  return [user1, wrapped_account]
 }
 
 export async function mint_tokens(
@@ -208,10 +175,10 @@ export async function initialize_two_auth(
   idendity: anchor.web3.PublicKey,
   approver: anchor.web3.PublicKey,
   wrapper_account: anchor.web3.PublicKey,
-  two_auth_entity: anchor.web3.PublicKey,
+  two_auth_entity: anchor.web3.Signer,
   program: Program<AssetBased>
 ): Promise<anchor.web3.PublicKey> {
-  const [two_auth, bump] = await anchor.web3.PublicKey.findProgramAddressSync(
+  const [two_auth, bump] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       Buffer.from("two_auth"),
       wrapper_account.toBuffer(),
@@ -219,6 +186,9 @@ export async function initialize_two_auth(
     ],
     program.programId
   );
+
+  console.log(wrapper_account);
+
 
   console.log("[Pk] Two Auth account", two_auth.toBase58());
 
@@ -263,9 +233,9 @@ export async function initialize_two_auth(
       payer: anchor.Wallet.local().publicKey,
       twoAuth: two_auth,
       idendity: idendity,
-      twoAuthEntity: two_auth_entity,
+      twoAuthEntity: two_auth_entity.publicKey,
     })
-    .signers([owner, anchor.Wallet.local().payer])
+    .signers([owner, anchor.Wallet.local().payer, two_auth_entity])
     .rpc();
 
   console.log("Init two_auth tx", tx);

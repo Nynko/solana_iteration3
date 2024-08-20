@@ -1,6 +1,6 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction};
 
-use crate::{error::IdendityError, IdAccount, Issuer, WrapperAccount};
+use crate::{error::IdendityError, idendity_account, IdAccount, Issuer, PseudoAccount, WrapperAccount};
 
 #[derive(Accounts)]
 pub struct InitializeId<'info> {
@@ -32,6 +32,34 @@ pub struct AddIssuer<'info> {
     pub system_program: Program<'info, System>,
 }
 
+
+#[derive(Accounts)]
+#[instruction(_pseudo: String)]
+pub struct AddPseudo<'info> {
+    #[account(mut, seeds = [b"identity", owner.key().as_ref()], bump = idendity.bump)]
+    pub idendity: Account<'info, IdAccount>,
+    #[account(init, seeds = [b"pseudo", _pseudo.as_bytes()], bump, payer=owner, space = 8 + 2)]
+    pub pseudo_account: Account<'info, PseudoAccount>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(_pseudo: String)]
+pub struct UpdatePseudo<'info> {
+    #[account(mut, seeds = [b"identity", owner.key().as_ref()], bump = idendity.bump)]
+    pub idendity: Account<'info, IdAccount>,
+    #[account(init, seeds = [b"pseudo", _pseudo.as_bytes()], bump, payer=owner, space = 2)]
+    pub new_pseudo_account: Account<'info, PseudoAccount>,
+    #[account(mut, close= owner, constraint = old_pseudo_account.key() == idendity.associated_pseudo.ok_or(IdendityError::PseudoDontExist)?.key())]
+    pub old_pseudo_account: Account<'info, PseudoAccount>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+
 pub fn _initialize_id(ctx: Context<InitializeId>, id_validity_duration: i64) -> Result<()> {
     // Check if the issuer has been approved
     let issuer = &ctx.accounts.issuer;
@@ -52,6 +80,8 @@ pub fn _initialize_id(ctx: Context<InitializeId>, id_validity_duration: i64) -> 
         active: true,
     };
     idendity.issuers = vec![issuer];
+    idendity.bump = ctx.bumps.idendity;
+    idendity.associated_pseudo = None;
     Ok(())
 }
 
@@ -94,5 +124,25 @@ pub fn check_idendity_not_recovered(idendity: &IdAccount) -> Result<()> {
     if idendity.recovered_address.is_some(){
         return Err(IdendityError::IdendityRecovered.into());
     }
+    Ok(())
+}
+
+
+pub fn _add_pseudo(ctx: Context<AddPseudo>, _pseudo: String) -> Result<()>{
+    let idendity_account = &mut ctx.accounts.idendity;
+    let pseudo_account = &mut ctx.accounts.pseudo_account;
+    if idendity_account.associated_pseudo.is_some(){
+        return Err(IdendityError::PseudoAlreadyExist.into());
+    } else {
+        idendity_account.associated_pseudo = Some(pseudo_account.key());
+        pseudo_account.initialized = true;
+        pseudo_account.bump = ctx.bumps.pseudo_account;
+        Ok(())
+    }
+}
+
+pub fn _update_pseudo(ctx: Context<UpdatePseudo>, _pseudo: String) -> Result<()>{
+    let idendity_account = &mut ctx.accounts.idendity;
+    idendity_account.associated_pseudo =  Some(ctx.accounts.new_pseudo_account.key());
     Ok(())
 }

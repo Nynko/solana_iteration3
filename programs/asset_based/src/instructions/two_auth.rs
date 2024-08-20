@@ -69,6 +69,9 @@ pub fn _initialize_two_auth(
         }
     }
 
+    two_auth.last_tx = Clock::get()?.unix_timestamp;
+    two_auth.bump = ctx.bumps.two_auth;
+
     Ok(())
 }
 

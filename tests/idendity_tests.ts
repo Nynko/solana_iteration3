@@ -31,4 +31,6 @@ export async function issue_first_idendity(
     .rpc();
 
   console.log(`Creating Idendity tx : ${tx}`);
+
+  return idendity;
 }

@@ -33,8 +33,13 @@ pub enum IdendityError {
     #[msg("Issuer is not approved")]
     IssuerNotApproved,
     #[msg("No approved issuer found or inactive/expired issuer")]
-    InvalidIdendity
+    InvalidIdendity,
+    #[msg("A pseudo already exist, please use the update method")]
+    PseudoAlreadyExist,
+    #[msg("The old pseudo doesn't exist, please use the add method")]
+    PseudoDontExist
 }
+
 
 
 #[error_code]
@@ -55,4 +60,6 @@ pub enum RecoveryError {
     RecoveryTimeNotPassed,
     #[msg("Not enough signatures")]
     NotEnoughSignatures,
+    #[msg("The main recovery authority is not in the list of recoverable authority")]
+    WrongMainRecoveryAuthority
 }

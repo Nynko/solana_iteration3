@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import fs from "fs";
 import { AssetBased } from "../target/types/asset_based";
 import { Program } from "@coral-xyz/anchor";
+import { publicKey } from "@coral-xyz/anchor/dist/cjs/utils";
 
 export function load_keypair(filename: string): anchor.web3.Keypair {
   const secret = JSON.parse(fs.readFileSync(filename).toString()) as number[];
@@ -37,37 +38,83 @@ export async function sendTransaction(
 }
 
 export async function create_user_with_best_bump(
+  mint: anchor.web3.PublicKey,
+  wrapper_account: anchor.web3.PublicKey,
   program: Program<AssetBased>,
-  mint: anchor.web3.PublicKey
-) {
-  let user;
-  let errorOccurred = true;
-  const bump = 255;
-  while (errorOccurred) {
-    try {
-      user = anchor.web3.Keypair.generate();
-      anchor.web3.PublicKey.createProgramAddressSync(
+) : Promise<[anchor.web3.Keypair, anchor.web3.PublicKey]>{
+  let owner : anchor.web3.Keypair;
+  let wrapped_account : anchor.web3.PublicKey;
+  let bump: number; // = 0;
+
+  // while (bump != 255) {
+
+
+      owner = anchor.web3.Keypair.generate();
+
+      [wrapped_account, bump] = await anchor.web3.PublicKey.findProgramAddressSync(
         [
-          Buffer.from("identity"),
-          user.publicKey.toBuffer(),
+          Buffer.from("wrapped_token"),
+          wrapper_account.toBuffer(),
+          mint.toBuffer(),
+          owner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+  
+      // [wrappedToken, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      //   [
+      //     Buffer.from('wrapped_token'),
+      //     wrapper.toBuffer(),
+      //     mint.toBuffer(),
+      //     user.publicKey.toBuffer(),
+      //   ],
+      //   program.programId,
+      // );
+  // }
+
+  return [owner,wrapped_account];
+}
+
+      // wrappedToken = anchor.web3.PublicKey.createProgramAddressSync(
+      //   [
+      //     Buffer.from('wrapped_token'),
+      //     wrapper.toBuffer(),
+      //     mint.toBuffer(),
+      //     user.publicKey.toBuffer(),
+      //     Buffer.from([bump]),
+      //   ],
+      //   program.programId,
+      // );
+
+export async function create_approver_with_best_bump(
+  program: Program<AssetBased>,
+) {
+  let approver : anchor.web3.Keypair;
+  let wrapper : anchor.web3.PublicKey;
+  let onCurve = true;
+  const bump = 255;
+  while (onCurve) {
+    try {
+      approver = anchor.web3.Keypair.generate();
+      wrapper = anchor.web3.PublicKey.createProgramAddressSync(
+        [
+          Buffer.from("wrapper"),
+          approver.publicKey.toBuffer(),
           Buffer.from([bump]),
         ],
         program.programId
       );
-      // anchor.web3.PublicKey.createProgramAddressSync(
-      //   [
-      //     Buffer.from('two_auth'),
-      //     wrapper_account.toBuffer(),
-      //     keypair.publicKey.toBuffer(),
-      //     Buffer.from([bump]),
-      //   ],
-      //   programId,
-      // );
-      errorOccurred = false;
+      if (!anchor.web3.PublicKey.isOnCurve(wrapper)){
+        onCurve = false;
+      }
+
     } catch (error) {
       continue;
     }
   }
 
-  return user;
+  console.log("wrapper:  ", wrapper.toBase58());
+  
+  
+  return approver;
 }

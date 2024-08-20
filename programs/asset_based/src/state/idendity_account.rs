@@ -6,17 +6,19 @@ pub struct IdAccount {
     pub owner: Pubkey,                     // 32
     pub issuers: Vec<Issuer>,              // 4 + 1* 49
     pub recovered_address: Option<Pubkey>, // recovered_address is the account address of the new owner if the account has been recovered
+    pub associated_pseudo: Option<Pubkey>, // 1 + 32
+    pub bump: u8 // 1
 }
 
 impl IdAccount {
-    pub const INIT_LEN: usize = 8 + 32 + 32 + 4 + 49 + 1;
+    pub const INIT_LEN: usize = 8 + 32 + 32 + 4 + 49 + 1 + (1 + 32) + 1 ;
 
     pub fn get_add_issuer_len(&self) -> usize {
-        return 8 + 32 + 4 + self.issuers.len() * 49 + 49 + 1;
+        return 8 + 32 + 4 + self.issuers.len() * 49 + 49 + 1 + (1 + 32) + 1;
     }
 
     pub fn get_recover_len(&self) -> usize {
-        return 8 + 32 + 4 + self.issuers.len() * 49 + 1 + 32;
+        return 8 + 32 + 4 + self.issuers.len() * 49 + 1 + 32 +  (1 + 32) + 1;
     }
 }
 
@@ -28,3 +30,10 @@ pub struct Issuer {
     pub expires_at: i64,    // 8
     pub active: bool,       // 1
 }
+
+
+#[account]
+pub struct PseudoAccount { // 8 + 2
+    pub initialized: bool, // 1
+    pub bump : u8 // 1
+} 
