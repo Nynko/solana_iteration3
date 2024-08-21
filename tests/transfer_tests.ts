@@ -1,7 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { AssetBased } from "../target/types/asset_based";
-import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export async function transfer_wtokens(
   amount: number,
@@ -14,6 +13,7 @@ export async function transfer_wtokens(
   two_auth_signer: anchor.web3.Signer | null,
   mint: anchor.web3.PublicKey,
   approver: anchor.web3.PublicKey,
+  token_program: anchor.web3.PublicKey,
   program: Program<AssetBased>
 ) {
   const instruction = await program.methods
@@ -28,7 +28,7 @@ export async function transfer_wtokens(
       wrapperAccount: wrapper_account,
       mint:mint,
       approver:approver,
-      tokenProgram:TOKEN_PROGRAM_ID
+      tokenProgram:token_program
     })
     .instruction();
 
@@ -58,21 +58,40 @@ export async function self_transfer_wtokens(
   wrapper_account: anchor.web3.PublicKey,
   source_owner: anchor.web3.Signer,
   source_wrapped_account: anchor.web3.PublicKey,
+  destination_owner: anchor.web3.PublicKey,
+  destination_wrapped_account: anchor.web3.PublicKey,
+  two_auth: anchor.web3.PublicKey,
+  mint: anchor.web3.PublicKey,
+  approver: anchor.web3.PublicKey,
+  token_program: anchor.web3.PublicKey,
   program: Program<AssetBased>
 ) {
   const instruction = await program.methods
     .transfer(new anchor.BN(amount))
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
-      destinationOwner: source_owner.publicKey,
+      destinationOwner: destination_owner,
       sourceWrappedAccount: source_wrapped_account,
-      destinationWrappedAccount: source_wrapped_account,
+      destinationWrappedAccount: destination_wrapped_account,
       twoAuthSigner: null,
+      twoAuth: two_auth,
       wrapperAccount: wrapper_account,
+      mint:mint,
+      approver:approver,
+      tokenProgram:token_program
     })
-    .signers([source_owner])
     .instruction();
 
+  // Create the priority fee instructions
+  // const computePriceIx = anchor.web3.ComputeBudgetProgram.setComputeUnitPrice({
+  //   microLamports: 10000,
+  // });
+
+  // const computeLimitIx = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({
+  //   units: 50_000,
+  // });
+
+  // const transaction = new anchor.web3.Transaction().add(computePriceIx,computeLimitIx,instruction);
   const transaction = new anchor.web3.Transaction().add(instruction);
 
   const txSig = await anchor.web3.sendAndConfirmTransaction(
@@ -93,12 +112,15 @@ export async function transfer_with_partial_sig(
   destination_owner: anchor.web3.PublicKey,
   destination_wrapped_account: anchor.web3.PublicKey,
   two_auth: anchor.web3.PublicKey,
-  two_auth_pubkey: anchor.web3.PublicKey | null,
+  two_auth_signer: anchor.web3.Signer | null,
+  mint: anchor.web3.PublicKey,
+  approver: anchor.web3.PublicKey,
+  token_program: anchor.web3.PublicKey,
   program: Program<AssetBased>
-): Promise<[Buffer, {
+) : Promise<[Buffer, {
   blockhash: anchor.web3.Blockhash;
   lastValidBlockHeight: number;
-}]> {
+}]>{
   const instruction = await program.methods
     .transfer(new anchor.BN(amount))
     .accountsPartial({
@@ -106,9 +128,12 @@ export async function transfer_with_partial_sig(
       destinationOwner: destination_owner,
       sourceWrappedAccount: source_wrapped_account,
       destinationWrappedAccount: destination_wrapped_account,
-      twoAuthSigner: two_auth_pubkey ? two_auth_pubkey : null,
+      twoAuthSigner: two_auth_signer ? two_auth_signer.publicKey : null,
       twoAuth: two_auth,
       wrapperAccount: wrapper_account,
+      mint:mint,
+      approver:approver,
+      tokenProgram: token_program
     })
     .instruction();
 

@@ -45,14 +45,14 @@ pub struct WrapTokens<'info> {
     pub wrapper_account: Account<'info, WrapperAccount>,
     /// CHECK: The approver of the wrapper
     pub approver: UncheckedAccount<'info>,
-    #[account(init_if_needed, token::authority = wrapper_account, token::mint = mint, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump, payer=owner_token_account)]
-    pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut, token::authority = owner_token_account, token::mint = mint)]
+    #[account(init_if_needed, token::authority = wrapper_account, token::mint = mint, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner_to_account.key().as_ref()], bump, payer=owner_from_token_account)]
+    pub to_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut, token::authority = owner_from_token_account, token::mint = mint)]
     pub from_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
-    pub owner_token_account: Signer<'info>,
+    pub owner_from_token_account: Signer<'info>,
     /// CHECK: owner.key() == user_wrapped_token_account.owner but need to check after init if init happens --> Maybe not necessary ? 
-    pub owner: AccountInfo<'info>,
+    pub owner_to_account: AccountInfo<'info>,
     #[account(mint::token_program = token_program)]
     pub mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -121,9 +121,9 @@ pub fn _wrap_tokens(ctx: Context<WrapTokens>, amount: u64, decimals: u8) -> Resu
     let ix = spl_token::instruction::transfer(
         ctx.accounts.token_program.key,
         &ctx.accounts.from_token_account.key(),
-        &ctx.accounts.user_wrapped_token_account.key(),
-        ctx.accounts.owner_token_account.key,
-        &[ctx.accounts.owner_token_account.key],
+        &ctx.accounts.to_wrapped_token_account.key(),
+        ctx.accounts.owner_from_token_account.key,
+        &[ctx.accounts.owner_from_token_account.key],
         amount,
     )?;
     program::invoke(
@@ -131,8 +131,8 @@ pub fn _wrap_tokens(ctx: Context<WrapTokens>, amount: u64, decimals: u8) -> Resu
         &[
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.from_token_account.to_account_info(),
-            ctx.accounts.user_wrapped_token_account.to_account_info(),
-            ctx.accounts.owner_token_account.to_account_info(),
+            ctx.accounts.to_wrapped_token_account.to_account_info(),
+            ctx.accounts.owner_from_token_account.to_account_info(),
         ],
     )?;
 

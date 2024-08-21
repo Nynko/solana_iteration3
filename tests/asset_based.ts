@@ -9,7 +9,7 @@ import {
   mint_tokens,
   initialize_two_auth,
 } from "./Initialize_tests";
-import { TOKEN_PROGRAM_ID, transfer } from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, transfer } from "@solana/spl-token";
 import { unwrap_tokens, wrap_tokens } from "./wrapped_tokens_tests";
 import { min } from "bn.js";
 import { expect } from "chai";
@@ -19,13 +19,16 @@ import { issue_first_idendity } from "./idendity_tests";
 import fs from "fs";
 import { init_recovery, recover } from "./recovery_tests";
 import { add_pseudo } from "./pseudo_tests";
+import * as dotenv from "dotenv";
+dotenv.config();
+
 
 describe("asset_based", async () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.AssetBased as Program<AssetBased>;
-  let mint_info: MintInfo, user1_info: User1Info, user2_info: UserInfo, wrapper: WrapperInfo, issuer: anchor.web3.Keypair, approver: anchor.web3.Keypair;
+  let mint_info: MintInfo, user1_info: User1Info, user2_info: UserInfo, wrapper: WrapperInfo,two_auth_entity:anchor.web3.Keypair,  issuer: anchor.web3.Keypair, approver: anchor.web3.Keypair;
   let payer = anchor.Wallet.local().payer;
   let issuer_approval, user1_id;
   let idendity1 : anchor.web3.PublicKey, idendity2 : anchor.web3.PublicKey;
@@ -92,7 +95,10 @@ describe("asset_based", async () => {
         ),
         approver: anchor.web3.Keypair.fromSecretKey(
           new Uint8Array(parsedData.approver)
-        )
+        ),
+        two_auth_entity: anchor.web3.Keypair.fromSecretKey(
+          new Uint8Array(parsedData.two_auth_entity)
+        ),
       };
 
       mint_info = loadedData.mint_info;
@@ -101,6 +107,7 @@ describe("asset_based", async () => {
       wrapper = loadedData.wrapper;
       issuer = loadedData.issuer;
       approver = loadedData.approver;
+      two_auth_entity = loadedData.two_auth_entity;
 
       return;
     } else {
@@ -111,6 +118,7 @@ describe("asset_based", async () => {
       wrapper = init_return.wrapper;
       issuer = init_return.issuer;
       approver = init_return.approver;
+      two_auth_entity = init_return.two_auth_entity;
 
       fs.writeFileSync(
         file_path,
@@ -138,7 +146,8 @@ describe("asset_based", async () => {
               wrapper_pda: wrapper.wrapper_pda.toBase58(),
             },
             issuer: Array.from(issuer.secretKey),
-            approver: Array.from(approver.secretKey)
+            approver: Array.from(approver.secretKey),
+            two_auth_entity: Array.from(two_auth_entity.secretKey),
           },
           null,
           2
@@ -154,6 +163,7 @@ describe("asset_based", async () => {
     expect(wrapper).to.not.be.null;
     expect(issuer).to.not.be.null;
     expect(approver).to.not.be.null;
+    expect(two_auth_entity).to.not.be.null;
   });
 
   it("Transfer Money", async () => {
@@ -251,6 +261,7 @@ describe("asset_based", async () => {
         user1_info.wrapped_account,
         mint_info.mint,
         user1_info.token_account,
+        mint_info.token_program,
         program
       );
 
@@ -264,6 +275,7 @@ describe("asset_based", async () => {
         user2_info.wrapped_account,
         mint_info.mint,
         user1_info.token_account,
+        mint_info.token_program,
         program
       );
 
@@ -334,7 +346,7 @@ describe("asset_based", async () => {
         idendity1,
         approver.publicKey,
         wrapper.wrapper_pda,
-        approver,
+        two_auth_entity,
         program
       );
     } catch (error) {
@@ -353,10 +365,8 @@ describe("asset_based", async () => {
         user1_info.user1,
         approver.publicKey,
         mint_info.mint,
-        approver,
         user1_info.wrapped_account,
         wrapper.wrapper_pda,
-        two_auth1,
         program
       )
     } catch (error) {
@@ -383,9 +393,10 @@ describe("asset_based", async () => {
         user2_info.user2.publicKey,
         user2_info.wrapped_account,
         two_auth1,
-        approver,
+        two_auth_entity,
         mint_info.mint,
         approver.publicKey,
+        mint_info.token_program,
         program
       );
     } catch (error) {
@@ -405,35 +416,11 @@ describe("asset_based", async () => {
     expect(user1_balance).to.equal(USER1_BALANCE - 2);
     expect(user2_balance).to.equal(2);
 
-    USER1_BALANCE = VALUE_WTOKENS - 2;
+    USER1_BALANCE = USER1_BALANCE - 2;
     USER2_BALANCE = 2;
   });
 
-  it("Recover Account", async () => {
-
-    try {
-
-      await recover(
-        issuer,
-        approver.publicKey,
-        user1_info.user1.publicKey,
-        issuer,
-        mint_info.mint,
-        program,
-      );
-
-      const old_wrapped_account = await program.provider.connection.getAccountInfo(
-        user1_info.wrapped_account
-      );
-      expect(old_wrapped_account).to.be.null;
-
-    } catch (error) {
-      console.log(error);
-      expect(error).to.be.null;
-
-    }
-
-  })
+  
 
   it("Pseudo", async () => {
 
@@ -457,201 +444,232 @@ describe("asset_based", async () => {
   });
 
 
-  // it("Unapproved Transfer Tokens", async () => {
-  //   await sendTransaction(
-  //     anchor.Wallet.local().payer,
-  //     user1_info.user1.publicKey,
-  //     1000000
-  //   );
-  //   try {
-  //     await transfer_wtokens(
-  //       2,
-  //       wrapper.wrapper_pda,
-  //       user1_info.user1,
-  //       user1_info.wrapped_account,
-  //       user2_info.user2.publicKey,
-  //       user2_info.wrapped_account,
-  //       two_auth,
-  //       null,
-  //       program
-  //     );
-  //   } catch (error) {
-  //     expect(error.logs).to.contain(
-  //       "Program log: AnchorError occurred. Error Code: NeedTwoAuthApproval. Error Number: 6001. Error Message: Need the two auth entity approval."
-  //     );
-  //   }
+  it("Unapproved Transfer Tokens", async () => {
+    try {
+      await transfer_wtokens(
+        2,
+        wrapper.wrapper_pda,
+        user1_info.user1,
+        user1_info.wrapped_account,
+        user2_info.user2.publicKey,
+        user2_info.wrapped_account,
+        two_auth1,
+        null,
+        mint_info.mint,
+        approver.publicKey,
+        mint_info.token_program,
+        program
+      );
+    } catch (error) {
+      expect(error.logs).to.contain(
+        "Program log: AnchorError occurred. Error Code: NeedTwoAuthApproval. Error Number: 6001. Error Message: Need the two auth entity approval."
+      );
+    }
 
-  //   const user1_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user1_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
-  //   const user2_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user2_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
+    const user1_balance =
+      await program.provider.connection.getTokenAccountBalance(
+        user1_info.wrapped_account
+      ).then((account) => Number(account.value.amount));
 
-  //   expect(user1_balance).to.equal(USER1_BALANCE);
-  //   expect(user2_balance).to.equal(USER2_BALANCE);
-  // });
+    const user2_balance = await program.provider.connection.getTokenAccountBalance(
+      user2_info.wrapped_account
+    ).then((account) => Number(account.value.amount));
 
-  // it("Self Transfer Tokens", async () => {
-  //   const user1_balance_init = await program.account.wrappedTokenAccount
-  //     .fetch(user1_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
+    expect(user1_balance).to.equal(USER1_BALANCE);
+    expect(user2_balance).to.equal(USER2_BALANCE);
+  });
 
-  //   try {
-  //     await self_transfer_wtokens(
-  //       1,
-  //       wrapper.wrapper_pda,
-  //       user1_info.user1,
-  //       user1_info.wrapped_account,
-  //       program
-  //     );
-  //   } catch (error) {
-  //     console.log("Error", error);
-  //     expect(error).to.be.null;
-  //   }
+  it("Self Transfer Tokens", async () => {
+    const user1_balance_init = await program.provider.connection.getTokenAccountBalance(
+      user1_info.wrapped_account
+    ).then((account) => Number(account.value.amount));
 
-  //   const user1_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user1_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
-  //   expect(user1_balance).to.equal(user1_balance_init);
-  // });
+    try {
+      await self_transfer_wtokens(
+        2,
+        wrapper.wrapper_pda,
+        user1_info.user1,
+        user1_info.wrapped_account,
+        user1_info.user1.publicKey,
+        user1_info.wrapped_account,
+        two_auth1,
+        mint_info.mint,
+        approver.publicKey,
+        mint_info.token_program,
+        program
+      );
+    } catch (error) {
+      console.log("Error", error);
+      expect(error).to.be.null;
+    }
 
-  // it("Transfer with signature signed outside of main tx", async () => {
+    const user1_balance =
+      await program.provider.connection.getTokenAccountBalance(
+        user1_info.wrapped_account
+      ).then((account) => Number(account.value.amount));
 
-  //   try {
-  //     const [rawTx, blockhash] = await transfer_with_partial_sig(2,
-  //       wrapper.wrapper_pda,
-  //       user1_info.user1,
-  //       user1_info.wrapped_account,
-  //       user2_info.user2.publicKey,
-  //       user2_info.wrapped_account,
-  //       two_auth,
-  //       approver.publicKey,
-  //       program
-  //     );
+    expect(user1_balance).to.equal(user1_balance_init);
+  });
 
+  it("Transfer with signature signed outside of main tx", async () => {
 
-  //     // // Define the file path
-  //     // const filePath = './output.json';
-
-  //     // const data = JSON.stringify({
-  //     //   transaction: rawTx.toString('base64'),
-  //     //   blockhash: blockhash.blockhash
-  //     // })
-
-  //     // // Write buffer data to file
-  //     // fs.writeFile(filePath, data, (err) => {
-  //     //   if (err) {
-  //     //     console.error('Error writing file:', err);
-  //     //   } else {
-  //     //     console.log('File saved successfully');
-  //     //   }
-  //     // });
-
-  //     const rawTx2 = await transfer_sign_by_2_auth(rawTx,
-  //       approver
-  //     );
-
-  //     await send_transaction_buffer(rawTx2, blockhash);
+    try {
+      const [rawTx, blockhash] = await transfer_with_partial_sig(
+        2,
+        wrapper.wrapper_pda,
+        user1_info.user1,
+        user1_info.wrapped_account,
+        user2_info.user2.publicKey,
+        user2_info.wrapped_account,
+        two_auth1,
+        two_auth_entity,
+        mint_info.mint,
+        approver.publicKey,
+        mint_info.token_program,
+        program
+      );
 
 
-  //   } catch (error) {
-  //     console.log(error);
-  //     expect(error).to.be.null;
-  //   }
+      const rawTx2 = await transfer_sign_by_2_auth(rawTx,
+        two_auth_entity
+      );
 
-  //   const user1_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user1_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
-  //   const user2_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user2_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
-
-  //   expect(user1_balance).to.equal(USER1_BALANCE - 2);
-  //   expect(user2_balance).to.equal(USER2_BALANCE + 2);
-
-  //   USER1_BALANCE = USER1_BALANCE - 2;
-  //   USER2_BALANCE = USER2_BALANCE + 2;
+      await send_transaction_buffer(rawTx2, blockhash);
 
 
-  // })
-  // it("Transfer with signature from server", async () => {
+    } catch (error) {
+      console.log(error);
+      expect(error).to.be.null;
+    }
 
-  //   try {
-  //     const [rawTx, blockhash] = await transfer_with_partial_sig(1,
-  //       wrapper.wrapper_pda,
-  //       user1_info.user1,
-  //       user1_info.wrapped_account,
-  //       user2_info.user2.publicKey,
-  //       user2_info.wrapped_account,
-  //       two_auth,
-  //       approver.publicKey,
-  //       program
-  //     );
+    const user1_balance =
+    await program.provider.connection.getTokenAccountBalance(
+      user1_info.wrapped_account
+    ).then((account) => Number(account.value.amount));
 
-
-  //     interface RawTxData {
-  //       transaction: String,
-  //       blockhash: String,
-  //     };
-
-  //     let responseData;
-
-  //     const signTwoAuth = async (rawData: RawTxData) => {
-  //       try {
-  //         const response = await fetch('http://localhost:3000/two-auth-sign', {
-  //           method: 'POST',
-  //           headers: {
-  //             'Content-Type': 'application/json',
-  //           },
-  //           body: JSON.stringify(rawData),
-  //         });
-
-  //         if (!response.ok) {
-  //           throw new Error(`Error: ${response.statusText}`);
-  //         }
-
-  //         responseData = await response.json();
-  //       } catch (error) {
-  //         console.error('Error:', error);
-  //       }
-  //     };
-
-  //     await signTwoAuth({ transaction: rawTx.toString('base64'), blockhash: blockhash.blockhash });
-
-  //     const rawTx2 = Buffer.from(responseData.transaction, 'base64');
-
-  //     const rawTx2Compare = await transfer_sign_by_2_auth(rawTx,
-  //       approver
-  //     );
-
-  //     expect(rawTx2.equals(rawTx2Compare)).to.be.true;
+  const user2_balance = await program.provider.connection.getTokenAccountBalance(
+    user2_info.wrapped_account
+  ).then((account) => Number(account.value.amount));
 
 
-  //     await send_transaction_buffer(rawTx2, blockhash);
+    expect(user1_balance).to.equal(USER1_BALANCE - 2);
+    expect(user2_balance).to.equal(USER2_BALANCE + 2);
+
+    USER1_BALANCE = USER1_BALANCE - 2;
+    USER2_BALANCE = USER2_BALANCE + 2;
+
+
+  })
+  it("Transfer with signature from server", async () => {
+
+    try {
+      const [rawTx, blockhash] = await transfer_with_partial_sig(
+        3,
+        wrapper.wrapper_pda,
+        user1_info.user1,
+        user1_info.wrapped_account,
+        user2_info.user2.publicKey,
+        user2_info.wrapped_account,
+        two_auth1,
+        two_auth_entity,
+        mint_info.mint,
+        approver.publicKey,
+        mint_info.token_program,
+        program
+      );
+
+      interface RawTxData {
+        transaction: String,
+        blockhash: String,
+      };
+
+      let responseData;
+
+      const signTwoAuth = async (rawData: RawTxData) => {
+        try {
+          const response = await fetch('http://localhost:3000/two-auth-sign', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(rawData),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
+          }
+
+          responseData = await response.json();
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      };
+
+      await signTwoAuth({ transaction: rawTx.toString('base64'), blockhash: blockhash.blockhash });
+
+      const rawTx2 = Buffer.from(responseData.transaction, 'base64');
+
+      const rawTx2Compare = await transfer_sign_by_2_auth(rawTx,
+        two_auth_entity
+      );
+
+      expect(rawTx2.equals(rawTx2Compare)).to.be.true;
+
+
+      await send_transaction_buffer(rawTx2, blockhash);
 
 
 
-  //   } catch (error) {
-  //     console.log(error);
-  //     expect(error).to.be.null;
-  //   }
+    } catch (error) {
+      console.log(error);
+      expect(error).to.be.null;
+    }
 
-  //   const user1_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user1_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
-  //   const user2_balance = await program.account.wrappedTokenAccount
-  //     .fetch(user2_info.wrapped_account)
-  //     .then((account) => account.amount.toNumber());
+    const user1_balance =
+    await program.provider.connection.getTokenAccountBalance(
+      user1_info.wrapped_account
+    ).then((account) => Number(account.value.amount));
 
-  //   expect(user1_balance).to.equal(USER1_BALANCE - 1);
-  //   expect(user2_balance).to.equal(USER2_BALANCE + 1);
-
-  //   USER1_BALANCE = USER1_BALANCE - 1;
-  //   USER2_BALANCE = USER2_BALANCE + 1;
+  const user2_balance = await program.provider.connection.getTokenAccountBalance(
+    user2_info.wrapped_account
+  ).then((account) => Number(account.value.amount));
 
 
-  // })
+
+    expect(user1_balance).to.equal(USER1_BALANCE - 3);
+    expect(user2_balance).to.equal(USER2_BALANCE + 3);
+
+    USER1_BALANCE = USER1_BALANCE - 3;
+    USER2_BALANCE = USER2_BALANCE + 3;
+
+
+  })
+
+  it("Recover Account", async () => {
+
+    try {
+
+      await recover(
+        issuer,
+        approver.publicKey,
+        user1_info.user1.publicKey,
+        mint_info.mint,
+        program,
+      );
+
+      const old_wrapped_account = await program.provider.connection.getAccountInfo(
+        user1_info.wrapped_account
+      );
+      expect(old_wrapped_account).to.be.null;
+
+    } catch (error) {
+      console.log(error);
+      expect(error).to.be.null;
+
+    }
+
+  })
+
 });
 
 interface MintInfo {
@@ -681,6 +699,7 @@ interface InitReturn {
   user2_info: UserInfo;
   wrapper: WrapperInfo;
   issuer: anchor.web3.Keypair;
+  two_auth_entity: anchor.web3.Keypair;
 }
 
 async function init(
@@ -699,8 +718,15 @@ async function init(
     mintFreezeAuthority.publicKey.toBase58()
   );
 
-  const issuer = anchor.web3.Keypair.generate();
+  // const issuer = anchor.web3.Keypair.generate();
+  const issuer = anchor.web3.Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(process.env.ISSUER_ID))
+  );
   console.log("[Pk] issuer", issuer.publicKey.toBase58());
+  const two_auth_entity = anchor.web3.Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(process.env.TWO_AUTH_AUTHORITY))
+  );
+  console.log("[Pk] two_auth_entity", two_auth_entity.publicKey.toBase58());
 
   const decimals = 2;
   const mint = await create_spl_mint(
@@ -718,23 +744,7 @@ async function init(
     approver,
     program
   );
-
-  // let bump: number = 1;
-  // let wrapped_account : anchor.web3.PublicKey;
-  // let user1 : anchor.web3.Keypair;
-  // while (bump != 255){
-  //   user1 = anchor.web3.Keypair.generate();
-  //   [wrapped_account,bump] = await anchor.web3.PublicKey.findProgramAddressSync(
-  //     [
-  //       Buffer.from("wrapped_token"),
-  //       wrapper_pda.toBuffer(),
-  //       mint.toBuffer(),
-  //       user1.publicKey.toBuffer(),
-  //     ],
-  //     program.programId
-  //   );
-  // }
-
+  
   const [user1,wrapped_account] = get_wrapped_account(wrapper_pda,mint,program);
   const [user2,wrapped_account2] = get_wrapped_account(wrapper_pda,mint,program);
 
@@ -790,5 +800,6 @@ async function init(
       wrapper_pda,
     },
     issuer: issuer,
+    two_auth_entity: two_auth_entity,
   };
 }

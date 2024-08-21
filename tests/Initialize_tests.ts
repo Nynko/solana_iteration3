@@ -19,10 +19,11 @@ export async function create_spl_mint(
   mintAuthority: anchor.web3.Keypair,
   freezeAuthority: anchor.web3.Keypair,
   decimals: number,
-  token_program: anchor.web3.PublicKey = TOKEN_PROGRAM_ID
+  token_program: anchor.web3.PublicKey = TOKEN_PROGRAM_ID,
+  connection: anchor.web3.Connection = anchor.getProvider().connection
 ): Promise<anchor.web3.PublicKey> {
   const mint = await createMint(
-    anchor.getProvider().connection,
+    connection,
     payer,
     mintAuthority.publicKey,
     freezeAuthority.publicKey,
@@ -151,10 +152,11 @@ export async function mint_tokens(
   mint: anchor.web3.PublicKey,
   token_account: anchor.web3.PublicKey,
   mintAuthority: anchor.web3.Keypair,
-  token_program: anchor.web3.PublicKey
+  token_program: anchor.web3.PublicKey,
+  connection: anchor.web3.Connection = anchor.getProvider().connection
 ) {
   const tx = await mintTo(
-    anchor.getProvider().connection,
+    connection,
     payer,
     mint,
     token_account,

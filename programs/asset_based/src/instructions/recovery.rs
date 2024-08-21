@@ -18,9 +18,6 @@ pub struct InitializeRecovery<'info> {
     #[account(mut, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
     pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
     pub owner: Signer<'info>,
-    pub two_auth_entity: Option<Signer<'info>>,
-    #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), owner.key().as_ref()], bump)]
-    pub two_auth: Account<'info,TwoAuth>,
     pub mint: InterfaceAccount<'info, Mint>,
     pub system_program: Program<'info, System>,
 }
@@ -63,8 +60,7 @@ pub struct RecoverAccount<'info> {
     pub recover_authority_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub main_recovery_authority: Signer<'info>,
-    pub two_auth_entity: Option<Signer<'info>>,
-    #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), owner.key().as_ref()], bump)]
+    #[account(seeds=[b"two_auth", wrapper_account.key().as_ref(), owner.key().as_ref()], bump)]
     pub two_auth: Account<'info,TwoAuth>,
     #[account(seeds = [b"identity", owner.key().as_ref()], bump)]
     pub idendity: Account<'info, IdAccount>,
@@ -88,8 +84,8 @@ pub fn _initialize_recovery(
 
 pub fn _recover_account(ctx: Context<RecoverAccount>) -> Result<()> {
     let recovery_authority = &ctx.accounts.recovery_authority;
-    let main_recover_authority = &ctx.accounts.main_recovery_authority;
-    let main_recovery = recovery_authority.authorities.iter().find(|recovery| recovery.authority == main_recover_authority.key());
+    let main_recovery_authority = &ctx.accounts.main_recovery_authority;
+    let main_recovery = recovery_authority.authorities.iter().find(|recovery| recovery.authority == main_recovery_authority.key());
 
     if main_recovery.is_none() {
         return Err(RecoveryError::WrongMainRecoveryAuthority.into())
@@ -109,7 +105,7 @@ pub fn _recover_account(ctx: Context<RecoverAccount>) -> Result<()> {
         let signers: Vec<_> = ctx
         .remaining_accounts
         .iter()
-        .filter(|account| account.is_signer && account.key != main_recover_authority.key)
+        .filter(|account| account.is_signer && account.key != main_recovery_authority.key)
         .collect();
 
         for authority in recovery_authority.authorities.iter().filter(

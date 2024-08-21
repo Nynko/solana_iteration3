@@ -21,10 +21,8 @@ export async function init_recovery(
     owner: anchor.web3.Signer,
     approver: anchor.web3.PublicKey,
     mint: anchor.web3.PublicKey,
-    two_auth_entity: anchor.web3.Signer | null,
     user_wrapped_token_account: anchor.web3.PublicKey,
     wrapper: anchor.web3.PublicKey,
-    two_auth: anchor.web3.PublicKey,
     program: anchor.Program<AssetBased>,
 ) {
     const tx = await program.methods
@@ -33,13 +31,11 @@ export async function init_recovery(
             payer: payer.publicKey,
             owner: owner.publicKey,
             approver: approver,
-            twoAuthEntity: two_auth_entity.publicKey,
             mint: mint,
             userWrappedTokenAccount: user_wrapped_token_account,
             wrapperAccount: wrapper,
-            twoAuth: two_auth,
         })
-        .signers(two_auth_entity ? [payer, owner, two_auth_entity] :[payer, owner] )
+        .signers([payer, owner])
         .rpc();
 
     console.log("Your transaction signature for recovery", tx);
@@ -49,7 +45,6 @@ export async function recover(
   mainRecoverAuthority: anchor.web3.Signer,
   approver: anchor.web3.PublicKey,
   lostAccount: anchor.web3.PublicKey,
-  two_auth_entity: anchor.web3.Signer,
   mint: anchor.web3.PublicKey,
   program: anchor.Program<AssetBased>
 ) {
@@ -59,10 +54,9 @@ export async function recover(
         mainRecoveryAuthority : mainRecoverAuthority.publicKey,
         approver,
         owner: lostAccount,
-        twoAuthEntity: two_auth_entity.publicKey,
         mint,
       })
-      .signers([two_auth_entity, two_auth_entity])
+      .signers([mainRecoverAuthority])
       .rpc();
 
     console.log("Your transaction signature for recovery", tx);
