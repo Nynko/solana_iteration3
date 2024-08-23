@@ -40,6 +40,7 @@ pub fn _add_pseudo(ctx: Context<AddPseudo>, _pseudo: String) -> Result<()>{
         idendity_account.associated_pseudo = Some(pseudo_account.key());
         pseudo_account.initialized = true;
         pseudo_account.bump = ctx.bumps.pseudo_account;
+        pseudo_account.owner = ctx.accounts.owner.key();
         Ok(())
     }
 }
@@ -47,5 +48,9 @@ pub fn _add_pseudo(ctx: Context<AddPseudo>, _pseudo: String) -> Result<()>{
 pub fn _update_pseudo(ctx: Context<UpdatePseudo>, _pseudo: String) -> Result<()>{
     let idendity_account = &mut ctx.accounts.idendity;
     idendity_account.associated_pseudo =  Some(ctx.accounts.new_pseudo_account.key());
+    let new_pseudo_account = &mut ctx.accounts.new_pseudo_account;
+    new_pseudo_account.initialized = true;
+    new_pseudo_account.bump = ctx.bumps.new_pseudo_account;
+    new_pseudo_account.owner = ctx.accounts.owner.key();
     Ok(())
 }

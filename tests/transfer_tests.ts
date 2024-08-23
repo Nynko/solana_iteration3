@@ -20,6 +20,7 @@ export async function transfer_wtokens(
     .transfer(new anchor.BN(amount))
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
+      payer: source_owner.publicKey,
       destinationOwner: destination_owner,
       sourceWrappedAccount: source_wrapped_account,
       destinationWrappedAccount: destination_wrapped_account,
@@ -70,6 +71,7 @@ export async function self_transfer_wtokens(
     .transfer(new anchor.BN(amount))
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
+      payer: source_owner.publicKey,
       destinationOwner: destination_owner,
       sourceWrappedAccount: source_wrapped_account,
       destinationWrappedAccount: destination_wrapped_account,
@@ -125,6 +127,7 @@ export async function transfer_with_partial_sig(
     .transfer(new anchor.BN(amount))
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
+      payer: source_owner.publicKey,
       destinationOwner: destination_owner,
       sourceWrappedAccount: source_wrapped_account,
       destinationWrappedAccount: destination_wrapped_account,

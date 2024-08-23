@@ -73,8 +73,5 @@ const wrapper = new anchor.web3.PublicKey(args[1]);
 const amount = parseFloat(args[2]);
 const user_to = new anchor.web3.PublicKey(args[3]);
 
-
-
-
 main(mint, wrapper, amount,user_to).catch(e => console.log(e)).then(() => console.log("finished"));
 

@@ -9,7 +9,7 @@ use anchor_lang::prelude::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("43BeXgVQtVYNQAopMAfkMCEHd5sbAi83DbrvndhHjXGD");
+declare_id!("5U7uBXK4as2Ayu5SRM3zoXSDGqoDx9YvKfCWn2JEkNgV");
 
 #[program]
 pub mod asset_based {

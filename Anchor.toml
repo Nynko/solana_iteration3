@@ -5,10 +5,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-asset_based = "43BeXgVQtVYNQAopMAfkMCEHd5sbAi83DbrvndhHjXGD"
+asset_based = "5U7uBXK4as2Ayu5SRM3zoXSDGqoDx9YvKfCWn2JEkNgV"
 
 [programs.devnet]
-asset_based = "43BeXgVQtVYNQAopMAfkMCEHd5sbAi83DbrvndhHjXGD"
+asset_based = "5U7uBXK4as2Ayu5SRM3zoXSDGqoDx9YvKfCWn2JEkNgV"
 
 [registry]
 url = "https://api.apr.dev"

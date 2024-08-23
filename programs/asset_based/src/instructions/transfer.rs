@@ -15,13 +15,15 @@ pub struct Transfer<'info> {
     pub idendity_sender: Box<Account<'info, IdAccount>>,
     #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), source_owner.key().as_ref()], bump = two_auth.bump)]
     pub two_auth: Account<'info,TwoAuth>,
-    #[account(init_if_needed, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), destination_owner.key().as_ref()], bump, payer = source_owner)]
+    #[account(init_if_needed, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), destination_owner.key().as_ref()], bump, payer = payer)]
     pub destination_wrapped_account: InterfaceAccount<'info, TokenAccount>,
     /// CHECK: The owner of the destination account
     pub destination_owner: AccountInfo<'info>,
     #[account(seeds = [b"identity", destination_owner.key().as_ref()], bump)]
     pub idendity_receiver: Box<Account<'info, IdAccount>>,
     pub two_auth_signer: Option<Signer<'info>>,
+    #[account(mut)]
+    pub payer : Signer<'info>,
     #[account(seeds=[b"wrapper", approver.key().as_ref()], bump = wrapper_account.bump)]
     pub wrapper_account: Account<'info, WrapperAccount>,
     /// CHECK: The approver of the wrapper

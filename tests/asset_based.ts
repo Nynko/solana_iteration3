@@ -491,6 +491,12 @@ describe("asset_based", async () => {
 
     try {
 
+      const idAccountBefore = await program.account.idAccount.fetch(
+        idendity1,
+      );
+
+      expect(idAccountBefore.associatedPseudo).to.null;
+
       const pseudo_account = await add_pseudo(
         idendity1,
         user1_info.user1,
@@ -500,12 +506,25 @@ describe("asset_based", async () => {
 
       console.log("[PK] Pseudo Account: ", pseudo_account);
 
+      const account = await program.account.pseudoAccount.fetch(
+        pseudo_account,
+      );
 
+      expect(account.owner.toBase58()).to.equal(user1_info.user1.publicKey.toBase58());
+      expect(account.initialized).to.be.true;
+
+      const idAccount = await program.account.idAccount.fetch(
+        idendity1,
+      );
+
+      expect(idAccount.associatedPseudo.toBase58()).to.equal(pseudo_account.toBase58());
 
     } catch (error) {
       console.log(error);
       expect(error).to.be.null;
     }
+
+
   });
 
   it("Should fail: cannot use 2 times the same Pseudo", async () => {
