@@ -20,7 +20,8 @@ export async function add_pseudo(
         .accountsPartial({
             owner: owner.publicKey,
             idendity,
-            pseudoAccount:pseudo_account
+            pseudoAccount:pseudo_account,
+            payer: owner.publicKey
         })
         .signers([owner])
         .rpc()

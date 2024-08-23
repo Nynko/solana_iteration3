@@ -15,8 +15,6 @@ pub struct InitializeRecovery<'info> {
     pub wrapper_account: Account<'info, WrapperAccount>,
     /// CHECK: The approver of the wrapper
     pub approver: UncheckedAccount<'info>,
-    #[account(mut, token::mint = mint, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), owner.key().as_ref()], bump)]
-    pub user_wrapped_token_account: InterfaceAccount<'info, TokenAccount>,
     pub owner: Signer<'info>,
     pub mint: InterfaceAccount<'info, Mint>,
     pub system_program: Program<'info, System>,

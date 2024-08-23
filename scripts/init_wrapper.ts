@@ -14,6 +14,9 @@ async function main(){
     const approver = anchor.web3.Keypair.fromSecretKey(
         new Uint8Array(JSON.parse(process.env.APPROVER))
       )
+
+    console.log("Approver: ", approver.publicKey.toBase58());
+    
     
     const issuer = new anchor.web3.PublicKey(process.env.ISSUER_ID_PK);
 

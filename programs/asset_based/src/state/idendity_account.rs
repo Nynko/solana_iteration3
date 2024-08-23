@@ -30,10 +30,3 @@ pub struct Issuer {
     pub expires_at: i64,    // 8
     pub active: bool,       // 1
 }
-
-
-#[account]
-pub struct PseudoAccount { // 8 + 2
-    pub initialized: bool, // 1
-    pub bump : u8 // 1
-} 

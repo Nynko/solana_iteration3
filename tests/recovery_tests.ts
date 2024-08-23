@@ -21,7 +21,6 @@ export async function init_recovery(
     owner: anchor.web3.Signer,
     approver: anchor.web3.PublicKey,
     mint: anchor.web3.PublicKey,
-    user_wrapped_token_account: anchor.web3.PublicKey,
     wrapper: anchor.web3.PublicKey,
     program: anchor.Program<AssetBased>,
 ) {
@@ -32,7 +31,6 @@ export async function init_recovery(
             owner: owner.publicKey,
             approver: approver,
             mint: mint,
-            userWrappedTokenAccount: user_wrapped_token_account,
             wrapperAccount: wrapper,
         })
         .signers([payer, owner])

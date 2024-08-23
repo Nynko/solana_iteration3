@@ -12,3 +12,6 @@ pub use wrapper_account::*;
 
 pub mod recovery_account;
 pub use recovery_account::*;
+
+pub mod pseudo_account;
+pub use pseudo_account::*;

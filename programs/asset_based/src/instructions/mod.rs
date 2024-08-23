@@ -12,3 +12,6 @@ pub use two_auth::*;
 
 pub mod recovery;
 pub use recovery::*;
+
+pub mod pseudo;
+pub use pseudo::*;

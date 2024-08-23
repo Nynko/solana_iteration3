@@ -9,7 +9,7 @@ use anchor_lang::prelude::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("BRkYvSnMBU1E5se7u46LF55tP2C4qakRshBg8WPUP9kW");
+declare_id!("43BeXgVQtVYNQAopMAfkMCEHd5sbAi83DbrvndhHjXGD");
 
 #[program]
 pub mod asset_based {
@@ -52,12 +52,14 @@ pub mod asset_based {
         idendity::_add_issuer_to_id(ctx, id_validity_duration)
     }
 
+    // Pseudo 
+    
     pub fn add_pseudo(ctx: Context<AddPseudo>, _pseudo: String) -> Result<()> {
-        idendity::_add_pseudo(ctx, _pseudo)
+        pseudo::_add_pseudo(ctx, _pseudo)
     }
 
     pub fn update_pseudo(ctx: Context<UpdatePseudo>, _pseudo: String) -> Result<()> {
-        idendity::_update_pseudo(ctx, _pseudo)
+        pseudo::_update_pseudo(ctx, _pseudo)
     }
 
     // TwoAuth instructions

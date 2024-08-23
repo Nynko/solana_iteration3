@@ -25,7 +25,7 @@ async function main(mint: anchor.web3.PublicKey,wrapper: anchor.web3.PublicKey, 
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-    mint_tokens(
+    await mint_tokens(
       amount,
       anchor.Wallet.local().payer,
       mint,
@@ -35,48 +35,29 @@ async function main(mint: anchor.web3.PublicKey,wrapper: anchor.web3.PublicKey, 
       program.provider.connection
     )
 
-    wrap_tokens(
+    const [wrapped_token_address, bump] =  await anchor.web3.PublicKey.findProgramAddressSync(
+            [
+              Buffer.from("wrapped_token"),
+              wrapper.toBuffer(),
+              mint.toBuffer(),
+              user_to.toBuffer(),
+            ],
+            program.programId
+          );
+
+    await wrap_tokens(
       amount,
       2,
       wrapper,
       approver.publicKey,
       user_to,
       anchor.Wallet.local().payer,
-      token_address,
+      wrapped_token_address,
       mint,
       token_address,
       TOKEN_PROGRAM_ID,
       program
     )
-
-    transfer(
-      amount,
-      mintAuthority,
-      user_to,
-      mint,
-      TOKEN_PROGRAM_ID,
-      program.provider.connection
-    )
-
-
-    const transferInstruction = anchor.web3.SystemProgram.transfer({
-      fromPubkey: anchor.Wallet.local().payer.publicKey,
-      toPubkey: user_to,
-      lamports: amount * anchor.web3.LAMPORTS_PER_SOL, // Convert transferAmount to lamports
-    });
-
-
-    // Add the transfer instruction to a new transaction
-    let transaction = new anchor.web3.Transaction();
-    transaction.add(transferInstruction);
-
-    const txSig = await anchor.web3.sendAndConfirmTransaction(
-      anchor.getProvider().connection,
-      transaction,
-      [anchor.Wallet.local().payer]
-    );
-
-    console.log(`Transfer of ${amount} SOL to user1 tx : ${txSig}`);
 
 }
 
@@ -87,10 +68,12 @@ if (args.length !== 4) {
   process.exit(1);
 }
 
-const amount = parseFloat(args[0]);
-const user_to = new anchor.web3.PublicKey(args[1]);
-const mint = new anchor.web3.PublicKey(args[2]);
-const wrapper = new anchor.web3.PublicKey(args[3]);
+const mint = new anchor.web3.PublicKey(args[0]);
+const wrapper = new anchor.web3.PublicKey(args[1]);
+const amount = parseFloat(args[2]);
+const user_to = new anchor.web3.PublicKey(args[3]);
+
+
 
 
 main(mint, wrapper, amount,user_to).catch(e => console.log(e)).then(() => console.log("finished"));

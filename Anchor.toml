@@ -5,10 +5,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-asset_based = "BRkYvSnMBU1E5se7u46LF55tP2C4qakRshBg8WPUP9kW"
+asset_based = "43BeXgVQtVYNQAopMAfkMCEHd5sbAi83DbrvndhHjXGD"
 
 [programs.devnet]
-asset_based = "BRkYvSnMBU1E5se7u46LF55tP2C4qakRshBg8WPUP9kW"
+asset_based = "43BeXgVQtVYNQAopMAfkMCEHd5sbAi83DbrvndhHjXGD"
 
 [registry]
 url = "https://api.apr.dev"
@@ -20,3 +20,7 @@ wallet = "/Users/nicolasbeaudouin/.config/solana/id.json"
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 init_wrapper = "yarn run ts-node scripts/init_wrapper.ts"
+init_mint = "yarn run ts-node scripts/dev-tokens.ts"
+init_token_account = "yarn run ts-node scripts/dev-create-spl-tokens.ts"
+airdrop_sol = "yarn run ts-node scripts/dev-airdrop-sol.ts"
+airdrop_tokens = "yarn run ts-node scripts/dev-airdrop-tokens.ts"

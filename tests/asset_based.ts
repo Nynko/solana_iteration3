@@ -9,7 +9,7 @@ import {
   mint_tokens,
   initialize_two_auth,
 } from "./Initialize_tests";
-import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, transfer } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, transfer } from "@solana/spl-token";
 import { unwrap_tokens, wrap_tokens } from "./wrapped_tokens_tests";
 import { min } from "bn.js";
 import { expect } from "chai";
@@ -28,10 +28,11 @@ describe("asset_based", async () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.AssetBased as Program<AssetBased>;
-  let mint_info: MintInfo, user1_info: User1Info, user2_info: UserInfo, wrapper: WrapperInfo,two_auth_entity:anchor.web3.Keypair,  issuer: anchor.web3.Keypair, approver: anchor.web3.Keypair;
+  let mint_info: MintInfo;
+  let user1_info: User1Info, user2_info: UserInfo, user3_info: UserInfo, user4_info: UserInfo;
+  let wrapper: WrapperInfo, two_auth_entity: anchor.web3.Keypair, issuer: anchor.web3.Keypair, approver: anchor.web3.Keypair;
   let payer = anchor.Wallet.local().payer;
-  let issuer_approval, user1_id;
-  let idendity1 : anchor.web3.PublicKey, idendity2 : anchor.web3.PublicKey;
+  let idendity1: anchor.web3.PublicKey, idendity2: anchor.web3.PublicKey;
   let two_auth1: anchor.web3.PublicKey;
 
   const DEVNET = false;
@@ -78,11 +79,27 @@ describe("asset_based", async () => {
           ),
         },
         user2_info: {
-          user2: anchor.web3.Keypair.fromSecretKey(
-            new Uint8Array(parsedData.user2_info.user2)
+          user: anchor.web3.Keypair.fromSecretKey(
+            new Uint8Array(parsedData.user2_info.user)
           ),
           wrapped_account: new anchor.web3.PublicKey(
             parsedData.user2_info.wrapped_account
+          ),
+        },
+        user3_info: {
+          user: anchor.web3.Keypair.fromSecretKey(
+            new Uint8Array(parsedData.user3_info.user)
+          ),
+          wrapped_account: new anchor.web3.PublicKey(
+            parsedData.user3_info.wrapped_account
+          ),
+        },
+        user4_info: {
+          user: anchor.web3.Keypair.fromSecretKey(
+            new Uint8Array(parsedData.user4_info.user)
+          ),
+          wrapped_account: new anchor.web3.PublicKey(
+            parsedData.user4_info.wrapped_account
           ),
         },
         wrapper: {
@@ -104,6 +121,8 @@ describe("asset_based", async () => {
       mint_info = loadedData.mint_info;
       user1_info = loadedData.user1_info;
       user2_info = loadedData.user2_info;
+      user3_info = loadedData.user3_info;
+      user4_info = loadedData.user4_info;
       wrapper = loadedData.wrapper;
       issuer = loadedData.issuer;
       approver = loadedData.approver;
@@ -115,6 +134,8 @@ describe("asset_based", async () => {
       mint_info = init_return.mint_info;
       user1_info = init_return.user1_info;
       user2_info = init_return.user2_info;
+      user3_info = init_return.user3_info;
+      user4_info = init_return.user4_info;
       wrapper = init_return.wrapper;
       issuer = init_return.issuer;
       approver = init_return.approver;
@@ -139,7 +160,15 @@ describe("asset_based", async () => {
               wrapped_account: user1_info.wrapped_account.toBase58(),
             },
             user2_info: {
-              user2: Array.from(user2_info.user2.secretKey),
+              user: Array.from(user2_info.user.secretKey),
+              wrapped_account: user2_info.wrapped_account.toBase58(),
+            },
+            user3_info: {
+              user: Array.from(user3_info.user.secretKey),
+              wrapped_account: user2_info.wrapped_account.toBase58(),
+            },
+            user4_info: {
+              user: Array.from(user4_info.user.secretKey),
               wrapped_account: user2_info.wrapped_account.toBase58(),
             },
             wrapper: {
@@ -178,7 +207,7 @@ describe("asset_based", async () => {
 
     const transferInstruction2 = anchor.web3.SystemProgram.transfer({
       fromPubkey: anchor.Wallet.local().payer.publicKey,
-      toPubkey: user2_info.user2.publicKey,
+      toPubkey: user2_info.user.publicKey,
       lamports: transferAmount * anchor.web3.LAMPORTS_PER_SOL, // Convert transferAmount to lamports
     });
 
@@ -223,7 +252,7 @@ describe("asset_based", async () => {
       );
       idendity2 = await issue_first_idendity(
         10000000,
-        user2_info.user2,
+        user2_info.user,
         issuer,
         approver.publicKey,
         wrapper.wrapper_pda,
@@ -238,6 +267,39 @@ describe("asset_based", async () => {
   const VALUE_TOKEN = 200;
   const VALUE_WTOKENS = 150;
   const VALUE_UNWRAP_WTOKENS = 50;
+
+  it("Should fail: Test Wrapping 0 tokens from account with no token account", async () => {
+    try {
+
+      const user3_token_address = getAssociatedTokenAddressSync(
+        mint_info.mint,
+        user3_info.user.publicKey,
+        false,
+        mint_info.token_program,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      await wrap_tokens(
+        0,
+        mint_info.decimals,
+        wrapper.wrapper_pda,
+        approver.publicKey,
+        user3_info.user.publicKey,
+        user3_info.user,
+        user3_info.wrapped_account,
+        mint_info.mint,
+        user3_token_address,
+        mint_info.token_program,
+        program
+      );
+
+    } catch (error) {
+      expect(error.logs).to.contain(
+        "Program log: AnchorError caused by account: from_token_account. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized."
+      );
+    }
+
+  });
 
 
   it("Wrap Tokens", async () => {
@@ -270,7 +332,7 @@ describe("asset_based", async () => {
         mint_info.decimals,
         wrapper.wrapper_pda,
         approver.publicKey,
-        user2_info.user2.publicKey,
+        user2_info.user.publicKey,
         user1_info.user1,
         user2_info.wrapped_account,
         mint_info.mint,
@@ -292,6 +354,14 @@ describe("asset_based", async () => {
           user1_info.token_account
         );
       expect(Number(token_account_balance.value.amount)).to.equal(VALUE_TOKEN - VALUE_WTOKENS);
+
+      const token_user2_wrapped_account_balance =
+        await program.provider.connection.getTokenAccountBalance(
+          user2_info.wrapped_account
+        );
+      expect(Number(token_user2_wrapped_account_balance.value.amount)).to.equal(0);
+
+
     } catch (error) {
       console.log("Error", error);
       expect(error).to.be.null;
@@ -365,7 +435,6 @@ describe("asset_based", async () => {
         user1_info.user1,
         approver.publicKey,
         mint_info.mint,
-        user1_info.wrapped_account,
         wrapper.wrapper_pda,
         program
       )
@@ -378,11 +447,7 @@ describe("asset_based", async () => {
 
 
   it("Transfer Tokens", async () => {
-    // await sendTransaction(
-    //   anchor.Wallet.local().payer,
-    //   user1_info.user1.publicKey,
-    //   1000000
-    // );
+
 
     try {
       await transfer_wtokens(
@@ -390,7 +455,7 @@ describe("asset_based", async () => {
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
-        user2_info.user2.publicKey,
+        user2_info.user.publicKey,
         user2_info.wrapped_account,
         two_auth1,
         two_auth_entity,
@@ -420,7 +485,7 @@ describe("asset_based", async () => {
     USER2_BALANCE = 2;
   });
 
-  
+
 
   it("Pseudo", async () => {
 
@@ -434,12 +499,37 @@ describe("asset_based", async () => {
       )
 
       console.log("[PK] Pseudo Account: ", pseudo_account);
-      
+
 
 
     } catch (error) {
       console.log(error);
       expect(error).to.be.null;
+    }
+  });
+
+  it("Should fail: cannot use 2 times the same Pseudo", async () => {
+    const pseudo = "Testons Ensemble les amis !";
+    try {
+      const pseudo_account = await add_pseudo(
+        idendity2,
+        user2_info.user,
+        pseudo,
+        program
+      )
+
+      console.log("[PK] Pseudo Account: ", pseudo_account);
+
+
+
+    } catch (error) {
+      const [pseudo_account, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from("pseudo"), Buffer.from(pseudo)],
+        program.programId
+      );
+
+      expect(error.logs).to.contains(`Allocate: account Address { address: ${pseudo_account.toBase58()}, base: None } already in use`)
+      
     }
   });
 
@@ -451,7 +541,7 @@ describe("asset_based", async () => {
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
-        user2_info.user2.publicKey,
+        user2_info.user.publicKey,
         user2_info.wrapped_account,
         two_auth1,
         null,
@@ -519,7 +609,7 @@ describe("asset_based", async () => {
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
-        user2_info.user2.publicKey,
+        user2_info.user.publicKey,
         user2_info.wrapped_account,
         two_auth1,
         two_auth_entity,
@@ -543,13 +633,13 @@ describe("asset_based", async () => {
     }
 
     const user1_balance =
-    await program.provider.connection.getTokenAccountBalance(
-      user1_info.wrapped_account
-    ).then((account) => Number(account.value.amount));
+      await program.provider.connection.getTokenAccountBalance(
+        user1_info.wrapped_account
+      ).then((account) => Number(account.value.amount));
 
-  const user2_balance = await program.provider.connection.getTokenAccountBalance(
-    user2_info.wrapped_account
-  ).then((account) => Number(account.value.amount));
+    const user2_balance = await program.provider.connection.getTokenAccountBalance(
+      user2_info.wrapped_account
+    ).then((account) => Number(account.value.amount));
 
 
     expect(user1_balance).to.equal(USER1_BALANCE - 2);
@@ -568,7 +658,7 @@ describe("asset_based", async () => {
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
-        user2_info.user2.publicKey,
+        user2_info.user.publicKey,
         user2_info.wrapped_account,
         two_auth1,
         two_auth_entity,
@@ -626,13 +716,13 @@ describe("asset_based", async () => {
     }
 
     const user1_balance =
-    await program.provider.connection.getTokenAccountBalance(
-      user1_info.wrapped_account
-    ).then((account) => Number(account.value.amount));
+      await program.provider.connection.getTokenAccountBalance(
+        user1_info.wrapped_account
+      ).then((account) => Number(account.value.amount));
 
-  const user2_balance = await program.provider.connection.getTokenAccountBalance(
-    user2_info.wrapped_account
-  ).then((account) => Number(account.value.amount));
+    const user2_balance = await program.provider.connection.getTokenAccountBalance(
+      user2_info.wrapped_account
+    ).then((account) => Number(account.value.amount));
 
 
 
@@ -685,7 +775,7 @@ interface User1Info {
   wrapped_account: anchor.web3.PublicKey;
 }
 interface UserInfo {
-  user2: anchor.web3.Keypair;
+  user: anchor.web3.Keypair;
   wrapped_account: anchor.web3.PublicKey;
 }
 interface WrapperInfo {
@@ -697,6 +787,8 @@ interface InitReturn {
   mint_info: MintInfo;
   user1_info: User1Info;
   user2_info: UserInfo;
+  user3_info: UserInfo;
+  user4_info: UserInfo;
   wrapper: WrapperInfo;
   issuer: anchor.web3.Keypair;
   two_auth_entity: anchor.web3.Keypair;
@@ -744,9 +836,11 @@ async function init(
     approver,
     program
   );
-  
-  const [user1,wrapped_account] = get_wrapped_account(wrapper_pda,mint,program);
-  const [user2,wrapped_account2] = get_wrapped_account(wrapper_pda,mint,program);
+
+  const [user1, wrapped_account] = get_wrapped_account(wrapper_pda, mint, program);
+  const [user2, wrapped_account2] = get_wrapped_account(wrapper_pda, mint, program);
+  const [user3, wrapped_account3] = get_wrapped_account(wrapper_pda, mint, program);
+  const [user4, wrapped_account4] = get_wrapped_account(wrapper_pda, mint, program);
 
   // const user2 = anchor.web3.Keypair.generate();
   console.log("[Pk] user1", user1.publicKey.toBase58());
@@ -793,8 +887,16 @@ async function init(
       wrapped_account,
     },
     user2_info: {
-      user2,
+      user: user2,
       wrapped_account: wrapped_account2,
+    },
+    user3_info: {
+      user: user3,
+      wrapped_account: wrapped_account3,
+    },
+    user4_info: {
+      user: user4,
+      wrapped_account: wrapped_account4,
     },
     wrapper: {
       wrapper_pda,
