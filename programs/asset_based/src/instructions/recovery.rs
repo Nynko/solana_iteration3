@@ -11,9 +11,7 @@ pub struct InitializeRecovery<'info> {
     pub recovery_authority: Account<'info, RecoveryAuthorities>,
     #[account(mut)]
     pub payer: Signer<'info>,
-    /// CHECK: owner == owner signer || owner is program_id and owner_signer is in signers
-    pub owner: AccountInfo<'info>,
-    pub owner_signer: Signer<'info>,
+    pub owner: Signer<'info>,
     pub mint: InterfaceAccount<'info, Mint>,
     pub system_program: Program<'info, System>,
 }

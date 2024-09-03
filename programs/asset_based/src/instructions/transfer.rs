@@ -9,12 +9,8 @@ use crate::{
 pub struct Transfer<'info> {
     #[account(mut, token::authority = wrapper_account, seeds=[b"wrapped_token", wrapper_account.key().as_ref(), mint.key().as_ref(), source_owner.key().as_ref()], bump)]
     pub source_wrapped_account: InterfaceAccount<'info, TokenAccount>,
-    /// CHECK: Either source_owner = source_signer OR owner of the source account is program_id and source_signer is in signers 
-    /// And that the source_owner is a proper Account of type SharedAccount if owner is program_id
-    #[account(mut)] 
-    pub source_owner: AccountInfo<'info>, // We can have multiple owners in an account
     #[account(mut)]
-    pub source_signer : Signer<'info>, // For single account: source_owner == source_signer
+    pub source_owner: Signer<'info>,
     #[account(seeds = [b"identity", source_owner.key().as_ref()], bump= idendity_sender.bump)]
     pub idendity_sender: Box<Account<'info, IdAccount>>,
     #[account(mut, seeds=[b"two_auth", wrapper_account.key().as_ref(), source_owner.key().as_ref()], bump = two_auth.bump)]
@@ -41,16 +37,6 @@ pub struct Transfer<'info> {
 pub fn _transfer(ctx: Context<Transfer>, amount: u64, decimals: u8) -> Result<()> {
     let source = &mut ctx.accounts.source_wrapped_account;
     let destination = &mut ctx.accounts.destination_wrapped_account;
-
-    let source_owner = &ctx.accounts.source_owner;
-    let source_signer = &ctx.accounts.source_signer;
-
-        /// CHECK: Either source_owner = source_signer OR owner of the source account is program_id and source_signer is in signers 
-    /// And that the source_owner is a proper Account of type SharedAccount if owner is program_id
-    /// 
-    if source_owner.key() != source_signer.key() {
-        return Err(IdendityError::InvalidIdendity.into());
-    }
 
     let self_transfer = source.key() == destination.key();
 
