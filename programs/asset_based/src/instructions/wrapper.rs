@@ -1,9 +1,9 @@
 use anchor_lang::{prelude::*, solana_program::program};
 use anchor_spl::{
-    associated_token::AssociatedToken, token::spl_token, token_2022, token_interface::{Mint, TokenAccount, TokenInterface}
+    token::spl_token, token_interface::{Mint, TokenAccount, TokenInterface}
 };
 
-use crate::{error::WrapperError, wrapper_account, WrapperAccount};
+use crate::{error::WrapperError, WrapperAccount};
 
 #[derive(Accounts)]
 #[instruction(list_issuer: Vec<Pubkey>, exit_regulators: Vec<Pubkey>)]

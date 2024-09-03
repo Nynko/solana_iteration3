@@ -29,9 +29,7 @@ export async function init_recovery(
         .accountsPartial({
             payer: payer.publicKey,
             owner: owner.publicKey,
-            approver: approver,
             mint: mint,
-            wrapperAccount: wrapper,
         })
         .signers([payer, owner])
         .rpc();

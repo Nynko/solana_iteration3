@@ -11,11 +11,9 @@ pub struct InitializeRecovery<'info> {
     pub recovery_authority: Account<'info, RecoveryAuthorities>,
     #[account(mut)]
     pub payer: Signer<'info>,
-    #[account(seeds=[b"wrapper", approver.key().as_ref()], bump)]
-    pub wrapper_account: Account<'info, WrapperAccount>,
-    /// CHECK: The approver of the wrapper
-    pub approver: UncheckedAccount<'info>,
-    pub owner: Signer<'info>,
+    /// CHECK: owner == owner signer || owner is program_id and owner_signer is in signers
+    pub owner: AccountInfo<'info>,
+    pub owner_signer: Signer<'info>,
     pub mint: InterfaceAccount<'info, Mint>,
     pub system_program: Program<'info, System>,
 }

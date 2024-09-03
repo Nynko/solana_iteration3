@@ -15,7 +15,7 @@ pub enum TransferError {
     #[msg("Decimal provided does not match the mint's decimal value")]
     InvalidDecimals,
     #[msg("Overflow when adding the amount to the destination account")]
-    Overflow
+    Overflow,
 }
 
 #[error_code]

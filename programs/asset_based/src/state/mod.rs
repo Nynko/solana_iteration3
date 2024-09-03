@@ -15,3 +15,6 @@ pub use recovery_account::*;
 
 pub mod pseudo_account;
 pub use pseudo_account::*;
+
+pub mod shared_account;
+pub use shared_account::*;

@@ -4,6 +4,7 @@ import { AssetBased } from "../target/types/asset_based";
 
 export async function transfer_wtokens(
   amount: number,
+  decimals: number,
   wrapper_account: anchor.web3.PublicKey,
   source_owner: anchor.web3.Signer,
   source_wrapped_account: anchor.web3.PublicKey,
@@ -17,7 +18,7 @@ export async function transfer_wtokens(
   program: Program<AssetBased>
 ) {
   const instruction = await program.methods
-    .transfer(new anchor.BN(amount))
+    .transfer(new anchor.BN(amount), decimals)
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
       payer: source_owner.publicKey,
@@ -56,6 +57,7 @@ export async function transfer_wtokens(
 
 export async function self_transfer_wtokens(
   amount: number,
+  decimals: number,
   wrapper_account: anchor.web3.PublicKey,
   source_owner: anchor.web3.Signer,
   source_wrapped_account: anchor.web3.PublicKey,
@@ -68,7 +70,7 @@ export async function self_transfer_wtokens(
   program: Program<AssetBased>
 ) {
   const instruction = await program.methods
-    .transfer(new anchor.BN(amount))
+    .transfer(new anchor.BN(amount), decimals)
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
       payer: source_owner.publicKey,
@@ -108,6 +110,7 @@ export async function self_transfer_wtokens(
 
 export async function transfer_with_partial_sig(
   amount: number,
+  decimals: number,
   wrapper_account: anchor.web3.PublicKey,
   source_owner: anchor.web3.Signer,
   source_wrapped_account: anchor.web3.PublicKey,
@@ -124,7 +127,7 @@ export async function transfer_with_partial_sig(
   lastValidBlockHeight: number;
 }]>{
   const instruction = await program.methods
-    .transfer(new anchor.BN(amount))
+    .transfer(new anchor.BN(amount), decimals)
     .accountsPartial({
       sourceOwner: source_owner.publicKey,
       payer: source_owner.publicKey,

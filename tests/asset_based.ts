@@ -452,6 +452,7 @@ describe("asset_based", async () => {
     try {
       await transfer_wtokens(
         2,
+        mint_info.decimals,
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
@@ -557,6 +558,7 @@ describe("asset_based", async () => {
     try {
       await transfer_wtokens(
         2,
+        mint_info.decimals,
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
@@ -596,6 +598,7 @@ describe("asset_based", async () => {
     try {
       await self_transfer_wtokens(
         2,
+        mint_info.decimals,
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
@@ -625,6 +628,7 @@ describe("asset_based", async () => {
     try {
       const [rawTx, blockhash] = await transfer_with_partial_sig(
         2,
+        mint_info.decimals,
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,
@@ -674,6 +678,7 @@ describe("asset_based", async () => {
     try {
       const [rawTx, blockhash] = await transfer_with_partial_sig(
         3,
+        mint_info.decimals,
         wrapper.wrapper_pda,
         user1_info.user1,
         user1_info.wrapped_account,

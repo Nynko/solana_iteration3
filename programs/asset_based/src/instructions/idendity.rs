@@ -1,13 +1,9 @@
-use anchor_lang::{prelude::*, solana_program::instruction};
+use anchor_lang::prelude::*;
 
-use crate::{error::IdendityError, idendity_account, IdAccount, Issuer, PseudoAccount, WrapperAccount};
+use crate::{error::IdendityError, IdAccount, Issuer};
 
 #[derive(Accounts)]
 pub struct InitializeId<'info> {
-    #[account(seeds=[b"wrapper", approver.key().as_ref()], bump)]
-    pub wrapper_account: Account<'info, WrapperAccount>,
-    /// CHECK: The approver of the wrapper
-    pub approver: UncheckedAccount<'info>,
     pub issuer: Signer<'info>,
     #[account(init, seeds = [b"identity", owner.key().as_ref()], bump, payer = payer, space = IdAccount::INIT_LEN)]
     pub idendity: Account<'info, IdAccount>,
@@ -21,10 +17,6 @@ pub struct InitializeId<'info> {
 pub struct AddIssuer<'info> {
     #[account(mut)]
     pub issuer: Signer<'info>,
-    #[account(seeds=[b"wrapper", approver.key().as_ref()], bump)]
-    pub wrapper_account: Account<'info, WrapperAccount>,
-    /// CHECK: The approver of the wrapper
-    pub approver: UncheckedAccount<'info>,
     #[account(mut,  seeds = [b"identity", owner.key().as_ref()], bump, realloc = idendity.get_add_issuer_len(), realloc::payer = owner , realloc::zero = false)]
     pub idendity: Account<'info, IdAccount>,
     #[account(mut)]
@@ -33,15 +25,10 @@ pub struct AddIssuer<'info> {
 }
 
 
+// DELETE ? 
+
+
 pub fn _initialize_id(ctx: Context<InitializeId>, id_validity_duration: i64) -> Result<()> {
-    // Check if the issuer has been approved
-    let issuer = &ctx.accounts.issuer;
-    let wrapper_account = &ctx.accounts.wrapper_account;
-
-    if !wrapper_account.id_issuers.contains(issuer.key) {
-        return Err(IdendityError::IssuerNotApproved.into());
-    }
-
     let clock = Clock::get()?;
     let idendity = &mut ctx.accounts.idendity;
     idendity.owner = ctx.accounts.owner.key().clone();
@@ -59,20 +46,12 @@ pub fn _initialize_id(ctx: Context<InitializeId>, id_validity_duration: i64) -> 
 }
 
 pub fn _add_issuer_to_id(ctx: Context<AddIssuer>, id_validity_duration: i64) -> Result<()> {
-    // Check if the issuer has been approved
-    let issuer = &ctx.accounts.issuer;
-    let wrapper_account = &ctx.accounts.wrapper_account;
-
-    if !wrapper_account.id_issuers.contains(issuer.key) {
-        return Err(IdendityError::IssuerNotApproved.into());
-    }
-
     // Check if the idendity has been recovered
     if ctx.accounts.idendity.recovered_address.is_some() {
         return Err(IdendityError::IdendityRecovered.into());
     }
 
-    // Check if the issuer is in the list of authorized issuers or if they have a signature or smth like that
+    // Check if the issuer is in the list of authorized issuers
     let issuers = &mut ctx.accounts.idendity.issuers;
     if issuers.iter().any(|i| i.key == ctx.accounts.issuer.key()) {
         return Err(IdendityError::IdendityAlreadyExists.into());

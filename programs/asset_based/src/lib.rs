@@ -9,7 +9,7 @@ use anchor_lang::prelude::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("5U7uBXK4as2Ayu5SRM3zoXSDGqoDx9YvKfCWn2JEkNgV");
+declare_id!("497QUkPeKAXrqDQzGGb73P9dfY5C76ZmsXibT2dP8mcu");
 
 #[program]
 pub mod asset_based {
@@ -93,8 +93,8 @@ pub mod asset_based {
 
     // Transfer instructions
 
-    pub fn transfer(ctx: Context<Transfer>, amount: u64) -> Result<()> {
-        transfer::_transfer(ctx, amount)
+    pub fn transfer(ctx: Context<Transfer>, amount: u64, decimals: u8) -> Result<()> {
+        transfer::_transfer(ctx, amount, decimals)
     }
 
     // Bridge with external world
