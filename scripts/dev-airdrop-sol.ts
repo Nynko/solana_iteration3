@@ -8,7 +8,7 @@ dotenv.config();
 
 async function main(amount: number, user_to : anchor.web3.PublicKey){
 
-    anchor.setProvider(anchor.AnchorProvider.local());
+  anchor.setProvider(anchor.AnchorProvider.env());
 
     const program = anchor.workspace.AssetBased as Program<AssetBased>;
 

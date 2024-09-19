@@ -8,6 +8,7 @@
     "@solana/spl-token": "^0.4.3",
     "anchor": "^1.4.1",
     "dotenv": "^16.4.5",
+    "react-native-svg": "^15.6.0",
     "yarn": "^1.22.22"
   },
   "devDependencies": {

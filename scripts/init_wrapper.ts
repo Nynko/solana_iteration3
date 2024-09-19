@@ -7,7 +7,7 @@ dotenv.config();
 
 async function main(){
 
-    anchor.setProvider(anchor.AnchorProvider.local());
+    anchor.setProvider(anchor.AnchorProvider.env());
 
     const program = anchor.workspace.AssetBased as Program<AssetBased>;
 

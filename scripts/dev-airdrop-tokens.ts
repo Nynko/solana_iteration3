@@ -9,7 +9,7 @@ dotenv.config();
 
 async function main(mint: anchor.web3.PublicKey,wrapper: anchor.web3.PublicKey, amount: number, user_to : anchor.web3.PublicKey){
 
-    anchor.setProvider(anchor.AnchorProvider.local());
+  anchor.setProvider(anchor.AnchorProvider.env());
 
     const program = anchor.workspace.AssetBased as Program<AssetBased>;
     const mintAuthority = anchor.Wallet.local().payer;
@@ -35,7 +35,7 @@ async function main(mint: anchor.web3.PublicKey,wrapper: anchor.web3.PublicKey, 
       program.provider.connection
     )
 
-    const [wrapped_token_address, bump] =  await anchor.web3.PublicKey.findProgramAddressSync(
+    const [wrapped_token_address, bump] = anchor.web3.PublicKey.findProgramAddressSync(
             [
               Buffer.from("wrapped_token"),
               wrapper.toBuffer(),

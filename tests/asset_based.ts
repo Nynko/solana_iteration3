@@ -35,7 +35,7 @@ describe("asset_based", async () => {
   let idendity1: anchor.web3.PublicKey, idendity2: anchor.web3.PublicKey;
   let two_auth1: anchor.web3.PublicKey;
 
-  const DEVNET = false;
+  const DEVNET = true;
 
   it("Init", async () => {
 

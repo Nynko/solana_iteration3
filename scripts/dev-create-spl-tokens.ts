@@ -8,9 +8,8 @@ dotenv.config();
 
 async function main(user: anchor.web3.PublicKey, mint: anchor.web3.PublicKey){
 
-    anchor.setProvider(anchor.AnchorProvider.local());
-
-    const program = anchor.workspace.AssetBased as Program<AssetBased>;
+  anchor.setProvider(anchor.AnchorProvider.env());
+  
 
     const token_account = await create_spl_token_account(
         anchor.Wallet.local().payer,
