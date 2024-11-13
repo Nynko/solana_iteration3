@@ -12,7 +12,7 @@ pub struct InitializeRecovery<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     pub owner: Signer<'info>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub mint: InterfaceAccount<'info, Mint>, // useless right ?
     pub system_program: Program<'info, System>,
 }
 

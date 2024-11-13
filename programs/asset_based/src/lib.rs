@@ -9,38 +9,42 @@ use anchor_lang::prelude::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("497QUkPeKAXrqDQzGGb73P9dfY5C76ZmsXibT2dP8mcu");
+declare_id!("GWceSREg4H34gWhTXy3sY9KeRgcviAz8FFSmWaoooGop");
 
 #[program]
 pub mod asset_based {
 
     use super::*;
 
-    // Wrapper instructions
+    // Subsystems instructions
 
-    pub fn initialize_wrapper(
-        ctx: Context<InitializeWrapper>,
+    pub fn initialize_subsystem(
+        ctx: Context<InitializeSubsystem>,
         list_issuer: Vec<Pubkey>,
         exit_regulators: Vec<Pubkey>
     ) -> Result<()> {
-        wrapper::_initialize_wrapper(ctx, list_issuer, exit_regulators)
+        subsystem::_initialize_subsystem(ctx, list_issuer, exit_regulators)
     }
 
-    pub fn add_issuers_wrapper(ctx: Context<AddWrapperIssuer>, issuer: Pubkey) -> Result<()> {
-        wrapper::_add_issuers_wrapper(ctx, issuer)
+    pub fn add_issuers_wrapper(ctx: Context<AddSubsystemIssuer>, issuer: Pubkey) -> Result<()> {
+        subsystem::_add_issuers_subsystem(ctx, issuer)
     }
 
-    pub fn remove_issuer_wrapper(ctx: Context<DeleteWrapperIssuer>) -> Result<()> {
-        wrapper::_remove_issuer_wrapper(ctx)
+    pub fn remove_issuer_wrapper(ctx: Context<DeleteSubsystemIssuer>) -> Result<()> {
+        subsystem::_remove_issuer_subsystem(ctx)
     }
 
-    pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64, decimals: u8) -> Result<()> {
-        wrapper::_wrap_tokens(ctx, amount, decimals)
+    pub fn deposit_token_subsystem(ctx: Context<DepositTokensSubsystem>, amount: u64, decimals: u8) -> Result<()> {
+        subsystem::_deposit_token_subsystem(ctx, amount, decimals)
     }
 
-    pub fn unwrap_tokens(ctx: Context<UnWrapTokens>, amount: u64, decimals: u8) -> Result<()>{
-        wrapper::_unwrap_tokens(ctx,amount,decimals)
+    pub fn withdraw_token_subsystem(ctx: Context<WithdrawTokensSubsystem>, amount: u64, decimals: u8) -> Result<()>{
+        subsystem::_withdraw_token_subsystem(ctx,amount,decimals)
     }
+
+    // Private Wrapper 
+
+    // pub fn wrap_tokens_to_private()
 
     // Idendity instructions
 
@@ -93,8 +97,8 @@ pub mod asset_based {
 
     // Transfer instructions
 
-    pub fn transfer(ctx: Context<Transfer>, amount: u64, decimals: u8) -> Result<()> {
-        transfer::_transfer(ctx, amount, decimals)
+    pub fn transfer_public(ctx: Context<Transfer>, amount: u64, decimals: u8) -> Result<()> {
+        transfer::_transfer_public(ctx, amount, decimals)
     }
 
     // Bridge with external world

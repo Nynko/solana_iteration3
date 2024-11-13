@@ -1,6 +1,3 @@
-pub mod wrapped_account;
-pub use wrapped_account::*;
-
 pub mod idendity_account;
 pub use idendity_account::*;
 

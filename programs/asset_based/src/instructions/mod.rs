@@ -1,5 +1,8 @@
-pub mod wrapper;
-pub use wrapper::*;
+pub mod subsystem;
+pub use subsystem::*;
+
+pub mod confidential_wrapper;
+pub use confidential_wrapper::*;
 
 pub mod transfer;
 pub use transfer::*;

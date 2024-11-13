@@ -34,7 +34,7 @@ pub struct Transfer<'info> {
     pub system_program : Program<'info, System>
 }
 
-pub fn _transfer(ctx: Context<Transfer>, amount: u64, decimals: u8) -> Result<()> {
+pub fn _transfer_public(ctx: Context<Transfer>, amount: u64, decimals: u8) -> Result<()> {
     let source = &mut ctx.accounts.source_wrapped_account;
     let destination = &mut ctx.accounts.destination_wrapped_account;
 
@@ -139,3 +139,6 @@ pub fn check_two_auth(two_auth: &mut Option<TwoAuthParameters>, two_auth_signer:
     }
     Ok(())
 }
+
+
+
